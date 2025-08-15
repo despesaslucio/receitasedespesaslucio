@@ -233,7 +233,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!response.ok) throw new Error(`Erro na rede: ${response.statusText}`);
             const data = await response.json();
 
-            // VERIFICA SE O SCRIPT RETORNOU UM ERRO
             if (data.status === 'error') {
                 throw new Error(data.message);
             }
