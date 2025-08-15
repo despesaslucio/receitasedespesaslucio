@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Financeiro Definitivo</title>
+    <title>Dashboard Financeiro Aprimorado</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
@@ -80,10 +80,16 @@
         .btn-cancelar:hover { background-color: #b3b3b3; }
 
         @media (max-width: 1200px) { .grid-principal { grid-template-columns: 1fr; } }
-        @media (max-width: 768px) { body { padding: 10px; } header h1 { font-size: 1.5em; } .secao-filtros, .grupo-filtro { flex-direction: column; align-items: stretch; } .grupo-filtro > div { display: flex; justify-content: space-around; width: 100%;} }
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            header h1 { font-size: 1.5em; }
+            .secao-filtros, .grupo-filtro { flex-direction: column; align-items: stretch; }
+            .grupo-filtro > div { display: flex; justify-content: space-around; width: 100%;}
+        }
     </style>
 </head>
 <body>
+
     <div class="container">
         <header>
             <div class="header-title">
@@ -97,6 +103,7 @@
                 </button>
             </div>
         </header>
+
         <main>
             <section class="cards-resumo">
                 <div class="card receitas clicavel" id="card-receitas"><div class="card-header"><span>Receitas</span><i class="fa-solid fa-circle-arrow-up"></i></div><p class="valor" id="total-receitas">R$ 0,00</p></div>
@@ -150,7 +157,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // --- CONFIGURAÇÃO ---
-    const apiUrl = 'COLE A SUA NOVA URL AQUI';
+    const apiUrl = 'https://script.google.com/macros/s/AKfycbzk7kVeMmJDw9ye0inCb03_NeCEZpuWuv7-AegrZnxDr9_ntIiVgKnp0710MF7Br432/exec';
     
     // --- VARIÁVEIS GLOBAIS ---
     let transacoesGeral = [];
@@ -187,7 +194,7 @@ document.addEventListener('DOMContentLoaded', function() {
         dashboardContentDiv.style.display = 'none';
         btnRefresh.firstElementChild.classList.add('fa-spin');
         
-        if (!apiUrl || apiUrl === 'https://script.google.com/macros/s/AKfycbyMIT0LSS5pcKWeQ-OU1wYuQKCyEP_GBKTCfLf43whaWgOCYizpWZOVLGiSaBAAgja5/exec') {
+        if (!apiUrl || apiUrl === 'COLE A SUA NOVA URL AQUI') {
             loadingDiv.innerHTML = `<p style="color:var(--cor-vermelho);"><i class="fa-solid fa-triangle-exclamation"></i> Erro: A URL da API não foi configurada.</p>`;
             return;
         }
@@ -431,11 +438,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const formatarData = (data) => data instanceof Date && !isNaN(data) ? data.toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Data inválida';
 
     aplicarTema(localStorage.getItem('temaDashboard') || 'light');
-    // A função do planejador foi removida para simplificar, você pode adicionar de volta se precisar.
+    // A função do planejador foi removida para simplificar
     carregarDadosIniciais();
     btnRefresh.addEventListener('click', carregarDadosIniciais);
 });
 </script>
 </body>
 </html>
-
