@@ -232,6 +232,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch(apiUrl);
             if (!response.ok) throw new Error(`Erro na rede: ${response.statusText}`);
             const data = await response.json();
+
+            // VERIFICA SE O SCRIPT RETORNOU UM ERRO
+            if (data.status === 'error') {
+                throw new Error(data.message);
+            }
             if (!Array.isArray(data)) throw new Error('Os dados recebidos não são uma lista. Verifique o script.');
             
             transacoesGeral = data.map(item => ({...item, 'Data da Transação': new Date(item['Data da Transação'])}));
@@ -386,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let html = '<p style="text-align:center; padding: 20px;">Nenhuma transação encontrada.</p>';
         if (transacoesParaExibir.length > 0) {
             const tableRows = transacoesParaExibir.map(t => {
-                const fonte = t['Fonte (Receita ou Despesa)'] || t['SELECIONE A RECEITA'] || '-';
+                const fonte = t['Fonte'] || t['Fonte (Receita ou Despesa)'] || t['SELECIONE A RECEITA'] || '-';
                 return `
                 <tr style="color: ${t['Tipo'] === 'Receita' ? 'var(--cor-verde)' : 'var(--cor-vermelho)'}">
                     <td>${formatarData(t['Data da Transação'])}</td>
@@ -439,14 +444,17 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const response = await fetch(apiUrl, {
                 method: 'POST',
-                mode: 'no-cors', // MANTIDO PARA COMPATIBILIDADE COM O REDIRECIONAMENTO DO GOOGLE
                 body: JSON.stringify(dadosParaEnviar)
             });
             
-            // Com 'no-cors', não podemos ler a resposta, então apenas assumimos sucesso se não houver erro de rede.
+            const result = await response.json();
+            if (result.status !== 'success') {
+                throw new Error(result.message || 'Erro desconhecido ao salvar.');
+            }
+
             fecharModalRegistro();
             alert('Transação registrada com sucesso! Atualizando o dashboard...');
-            setTimeout(() => carregarDadosIniciais(), 1500); // Um delay maior para garantir que a planilha processe
+            setTimeout(() => carregarDadosIniciais(), 1500);
 
         } catch (error) {
             console.error('Erro ao registrar transação:', error);
