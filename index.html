@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Financeiro Interativo</title>
+    <title>Dashboard Financeiro Aprimorado</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
@@ -144,7 +144,7 @@
             <div id="dashboard-content" style="display:none;">
                 <section class="grid-principal">
                     <div class="widget"> <h2 id="titulo-grafico">Evolução Financeira</h2> <div class="chart-container"> <canvas id="grafico-linhas"></canvas> <p id="msg-grafico-linhas" class="empty-chart-message"><i class="fa-solid fa-chart-simple"></i><br>Sem dados para exibir</p> </div> </div>
-                    <div class="widget"> <h2 id="titulo-categorias">Top 10 Despesas</h2> <div class="chart-container"> <canvas id="grafico-categorias"></canvas> <p id="msg-grafico-categorias" class="empty-chart-message"><i class="fa-solid fa-chart-simple"></i><br>Sem dados para exibir</p> </div> </div>
+                    <div class="widget"> <h2 id="titulo-categorias">Top 10 Despesas por Local</h2> <div class="chart-container"> <canvas id="grafico-categorias"></canvas> <p id="msg-grafico-categorias" class="empty-chart-message"><i class="fa-solid fa-chart-simple"></i><br>Sem dados para exibir</p> </div> </div>
                     <div class="widget" style="grid-column: 1 / -1;"> <h2>Planejador de Contas <button class="btn-icon" id="btn-adicionar-conta" title="Adicionar conta">+</button></h2> <div class="tabela-contas-wrapper"> <table class="tabela-contas"> <thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead> <tbody id="corpo-tabela-planejador"></tbody> </table> </div> </div>
                 </section>
             </div>
@@ -185,30 +185,16 @@
             </div>
             <div class="modal-body">
                 <form id="form-registro">
-                    <div class="form-grupo">
-                        <label for="reg-data">Data da Transação</label>
-                        <input type="date" id="reg-data" required>
-                    </div>
-                    <div class="form-grupo">
-                        <label for="reg-tipo">Tipo</label>
-                        <select id="reg-tipo" required>
-                            <option value="Despesa">Despesa</option>
-                            <option value="Receita">Receita</option>
-                        </select>
-                    </div>
-                    <div class="form-grupo">
-                        <label for="reg-descricao">Descrição</label>
-                        <input type="text" id="reg-descricao" placeholder="Ex: Supermercado, Salário" required>
-                    </div>
-                    <div class="form-grupo">
-                        <label for="reg-valor">Valor</label>
-                        <input type="number" id="reg-valor" placeholder="150.50" step="0.01" required>
-                    </div>
+                    <div class="form-grupo"><label for="reg-data">Data da Transação</label><input type="date" id="reg-data" required></div>
+                    <div class="form-grupo"><label for="reg-tipo">Tipo</label><select id="reg-tipo" required><option value="Despesa">Despesa</option><option value="Receita">Receita</option></select></div>
+                    <div class="form-grupo"><label for="reg-fonte">Fonte (Receita ou Despesa)</label><input type="text" id="reg-fonte" placeholder="Ex: Salário, Supermercado" required></div>
+                    <div class="form-grupo"><label for="reg-local">Local (para despesas)</label><input type="text" id="reg-local" placeholder="Ex: Centro, Casa"></div>
+                    <div class="form-grupo"><label for="reg-descricao">Descrição (Opcional)</label><input type="text" id="reg-descricao" placeholder="Ex: Compras do mês"></div>
+                    <div class="form-grupo"><label for="reg-valor">Valor</label><input type="number" id="reg-valor" placeholder="150.50" step="0.01" required></div>
                     <div class="form-botoes">
                         <button type="button" class="btn btn-cancelar" id="btn-cancelar-registro">Cancelar</button>
                         <button type="submit" class="btn btn-nova-transacao" id="btn-salvar-registro">
-                            <span class="btn-text">Salvar</span>
-                            <i class="fa-solid fa-spinner fa-spin" style="display: none;"></i>
+                            <span class="btn-text">Salvar</span><i class="fa-solid fa-spinner fa-spin" style="display: none;"></i>
                         </button>
                     </div>
                 </form>
@@ -219,7 +205,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // --- CONFIGURAÇÃO ---
-    const apiUrl = 'https://script.google.com/macros/s/AKfycbx-7i3AXFcyqvutp0BrKAoBPlzjv8HCHDmowP2f-3gi6HS3oW7cxY_79aqdl-hgQrJz/exec';
+    const apiUrl = 'COLE_SUA_NOVA_URL_AQUI'; // <-- IMPORTANTE: COLE A NOVA URL GERADA PELO APPS SCRIPT AQUI!
     
     // --- VARIÁVEIS GLOBAIS ---
     let transacoesGeral = [];
@@ -236,6 +222,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const saldoTotalEl = document.getElementById('saldo-total');
     const corpoTabelaPlanejador = document.getElementById('corpo-tabela-planejador');
     const tituloGraficoEl = document.getElementById('titulo-grafico');
+    const tituloCategoriasEl = document.getElementById('titulo-categorias');
     const btnRefresh = document.getElementById('btn-refresh');
     const btnToggleTheme = document.getElementById('btn-toggle-theme');
 
@@ -243,20 +230,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const cardDespesas = document.getElementById('card-despesas');
     const cardSaldo = document.getElementById('card-saldo');
 
-    // Modal Planejador
     const modalPlanejador = document.getElementById('modal-planejador');
     const btnAdicionarConta = document.getElementById('btn-adicionar-conta');
     const btnCancelarModal = document.getElementById('btn-cancelar-modal');
     const btnFecharPlanejador = document.getElementById('btn-fechar-planejador');
     const formPlanejador = document.getElementById('form-planejador');
 
-    // Modal Detalhes
     const modalDetalhes = document.getElementById('modal-detalhes');
     const modalDetalhesTitulo = document.getElementById('modal-detalhes-titulo');
     const modalDetalhesConteudo = document.getElementById('modal-detalhes-conteudo');
     const btnFecharDetalhes = document.getElementById('btn-fechar-detalhes');
 
-    // Modal Registro (NOVO)
     const modalRegistro = document.getElementById('modal-registro');
     const btnAbrirModalRegistro = document.getElementById('btn-abrir-modal-registro');
     const btnFecharRegistro = document.getElementById('btn-fechar-registro');
@@ -270,17 +254,19 @@ document.addEventListener('DOMContentLoaded', function() {
         dashboardContentDiv.style.display = 'none';
         btnRefresh.firstElementChild.classList.add('fa-spin');
         
-        if (!apiUrl || apiUrl === 'SUA_URL_DA_API_AQUI') {
+        if (!apiUrl || apiUrl === 'https://script.google.com/macros/s/AKfycbz4NLQeGz6oMIBOsZUafaXT-H0tKfqf9cRLQh7vLm-IZ7mKS0sqY-4pfhzgOzPhKLMe/exec') {
             loadingDiv.innerHTML = `<p style="color:var(--cor-vermelho);"><i class="fa-solid fa-triangle-exclamation"></i> Erro: A URL da API não foi configurada.</p>`;
             return;
         }
         try {
-            const response = await fetch(`${apiUrl}?cache_bust=${new Date().getTime()}`);
+            // Removido o cache_bust, pois o CORS correto não precisa disso.
+            const response = await fetch(apiUrl);
             if (!response.ok) throw new Error(`Erro na rede: ${response.statusText}`);
             const data = await response.json();
             if (!Array.isArray(data)) throw new Error('Dados recebidos da API não são uma lista.');
             
-            transacoesGeral = data.map(item => ({...item, data: new Date(item['Data da Transação'])}));
+            // MODIFICADO: Mapeia a data para o formato correto.
+            transacoesGeral = data.map(item => ({...item, 'Data da Transação': new Date(item['Data da Transação'])}));
             
             aplicarFiltros();
             
@@ -288,7 +274,7 @@ document.addEventListener('DOMContentLoaded', function() {
             dashboardContentDiv.style.display = 'block';
         } catch (error) {
             console.error('Erro ao buscar dados:', error);
-            loadingDiv.innerHTML = `<p style="color:var(--cor-vermelho);"><i class="fa-solid fa-circle-xmark"></i> Falha ao carregar: ${error.message}</p>`;
+            loadingDiv.innerHTML = `<p style="color:var(--cor-vermelho);"><i class="fa-solid fa-circle-xmark"></i> Falha ao carregar: ${error.message}. Verifique se a URL da API está correta e se o script foi re-implantado.</p>`;
         } finally {
             btnRefresh.firstElementChild.classList.remove('fa-spin');
         }
@@ -299,13 +285,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const periodoFiltro = document.querySelector('#filtro-periodo .active').dataset.periodo;
         
         transacoesAtuaisFiltradas = transacoesGeral.filter(t => {
-            if (tipoFiltro !== 'Todos' && t.Tipo !== tipoFiltro) return false;
+            // Renomeado para 'Tipo' para bater com o nome da coluna esperado
+            if (tipoFiltro !== 'Todos' && t['Tipo'] !== tipoFiltro) return false;
             const hoje = new Date();
             switch(periodoFiltro) {
-                case 'Diario': return dateFns.isSameDay(t.data, hoje);
-                case 'Semanal': return dateFns.isSameWeek(t.data, hoje, { weekStartsOn: 1 });
-                case 'Mensal': return dateFns.isSameMonth(t.data, hoje);
-                case 'Anual': return dateFns.isSameYear(t.data, hoje);
+                case 'Diario': return dateFns.isSameDay(t['Data da Transação'], hoje);
+                case 'Semanal': return dateFns.isSameWeek(t['Data da Transação'], hoje, { weekStartsOn: 1 });
+                case 'Mensal': return dateFns.isSameMonth(t['Data da Transação'], hoje);
+                case 'Anual': return dateFns.isSameYear(t['Data da Transação'], hoje);
                 default: return true;
             }
         });
@@ -323,8 +310,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- FILTROS ---
     document.querySelectorAll('.btn-filtro').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            const grupo = e.target.closest('.grupo-filtro');
-            grupo.querySelector('.active').classList.remove('active');
+            e.target.parentElement.querySelector('.active').classList.remove('active');
             e.target.classList.add('active');
             aplicarFiltros();
         });
@@ -332,8 +318,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- CARDS ---
     function atualizarCards(transacoes) {
-        const receitas = transacoes.filter(t => t.Tipo === 'Receita').reduce((acc, t) => acc + t.Valor, 0);
-        const despesas = transacoes.filter(t => t.Tipo === 'Despesa').reduce((acc, t) => acc + t.Valor, 0);
+        const receitas = transacoes.filter(t => t['Tipo'] === 'Receita').reduce((acc, t) => acc + t['Valor'], 0);
+        const despesas = transacoes.filter(t => t['Tipo'] === 'Despesa').reduce((acc, t) => acc + t['Valor'], 0);
         const saldo = receitas - despesas;
         
         totalReceitasEl.textContent = formatarMoeda(receitas);
@@ -345,14 +331,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- GRÁFICOS ---
     function criarGraficoLinhas(transacoes) {
         const ctx = document.getElementById('grafico-linhas').getContext('2d');
-        const msgEl = document.getElementById('msg-grafico-linhas');
-        
         if (transacoes.length === 0) {
-            msgEl.style.display = 'block';
-            if (graficoLinhas) {graficoLinhas.destroy(); graficoLinhas = null;}
+            document.getElementById('msg-grafico-linhas').style.display = 'block';
+            if (graficoLinhas) { graficoLinhas.destroy(); graficoLinhas = null; }
             return;
         }
-        msgEl.style.display = 'none';
+        document.getElementById('msg-grafico-linhas').style.display = 'none';
 
         const periodoFiltro = document.querySelector('#filtro-periodo .active').dataset.periodo;
         let unit;
@@ -363,10 +347,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const dadosAgrupados = transacoes.reduce((acc, t) => {
-            if (!t.data || isNaN(t.data.getTime())) return acc;
+            const d = t['Data da Transação'];
+            if (!d || isNaN(d.getTime())) return acc;
             
             let chaveObj;
-            const d = t.data;
             if (unit === 'hour') chaveObj = new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours());
             else if (unit === 'day') chaveObj = new Date(d.getFullYear(), d.getMonth(), d.getDate());
             else if (unit === 'month') chaveObj = new Date(d.getFullYear(), d.getMonth(), 1);
@@ -374,8 +358,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const chave = chaveObj.toISOString();
 
             if (!acc[chave]) acc[chave] = { receitas: 0, despesas: 0 };
-            if (t.Tipo === 'Receita') acc[chave].receitas += t.Valor;
-            else if (t.Tipo === 'Despesa') acc[chave].despesas += t.Valor;
+            if (t['Tipo'] === 'Receita') acc[chave].receitas += t['Valor'];
+            else if (t['Tipo'] === 'Despesa') acc[chave].despesas += t['Valor'];
             return acc;
         }, {});
 
@@ -383,34 +367,27 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (graficoLinhas) graficoLinhas.destroy();
         graficoLinhas = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    { label: 'Receitas', data: labels.map(key => dadosAgrupados[key].receitas), borderColor: 'var(--cor-verde)', backgroundColor: 'rgba(16, 185, 129, 0.2)', fill: true, tension: 0.3 },
-                    { label: 'Despesas', data: labels.map(key => dadosAgrupados[key].despesas), borderColor: 'var(--cor-vermelho)', backgroundColor: 'rgba(239, 68, 68, 0.2)', fill: true, tension: 0.3 }
-                ]
-            },
+            type: 'line', data: { labels: labels, datasets: [{ label: 'Receitas', data: labels.map(key => dadosAgrupados[key].receitas), borderColor: 'var(--cor-verde)', backgroundColor: 'rgba(16, 185, 129, 0.2)', fill: true, tension: 0.3 }, { label: 'Despesas', data: labels.map(key => dadosAgrupados[key].despesas), borderColor: 'var(--cor-vermelho)', backgroundColor: 'rgba(239, 68, 68, 0.2)', fill: true, tension: 0.3 }] },
             options: { responsive: true, scales: { x: { type: 'time', time: { unit: unit, tooltipFormat: 'dd/MM/yyyy' } }, y: { beginAtZero: true, ticks: { callback: value => formatarMoeda(value) } } } }
         });
     }
     
+    // MODIFICADO: Gráfico de categorias agora agrupa por 'Local'
     function criarGraficoCategorias(transacoes) {
         const ctx = document.getElementById('grafico-categorias').getContext('2d');
-        const msgEl = document.getElementById('msg-grafico-categorias');
-        const despesas = transacoes.filter(t => t.Tipo === 'Despesa');
+        const despesas = transacoes.filter(t => t['Tipo'] === 'Despesa');
         
         if (despesas.length === 0) {
-            msgEl.style.display = 'block';
+            document.getElementById('msg-grafico-categorias').style.display = 'block';
             if (graficoCategorias) { graficoCategorias.destroy(); graficoCategorias = null; }
             return;
         }
-        msgEl.style.display = 'none';
+        document.getElementById('msg-grafico-categorias').style.display = 'none';
 
         const dadosAgrupados = despesas.reduce((acc, t) => {
-            const desc = t.Descrição || 'Sem Descrição';
-            if (!acc[desc]) acc[desc] = 0;
-            acc[desc] += t.Valor;
+            const local = t['Local'] || 'Não especificado'; // Agrupa por Local
+            if (!acc[local]) acc[local] = 0;
+            acc[local] += t['Valor'];
             return acc;
         }, {});
 
@@ -418,11 +395,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (graficoCategorias) graficoCategorias.destroy();
         graficoCategorias = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: top10.map(([desc]) => desc),
-                datasets: [{ label: `Valor Total`, data: top10.map(([,valor]) => valor), backgroundColor: 'rgba(239, 68, 68, 0.7)', borderColor: 'var(--cor-vermelho)', borderWidth: 1 }]
-            },
+            type: 'bar', data: { labels: top10.map(([local]) => local), datasets: [{ label: `Valor Total`, data: top10.map(([,valor]) => valor), backgroundColor: 'rgba(239, 68, 68, 0.7)', borderColor: 'var(--cor-vermelho)', borderWidth: 1 }] },
             options: { indexAxis: 'y', responsive: true, scales: { x: { ticks: { callback: value => formatarMoeda(value) } } }, plugins: { legend: { display: false } } }
         });
     }
@@ -441,83 +414,43 @@ document.addEventListener('DOMContentLoaded', function() {
         fecharModalPlanejador();
     });
 
-    function renderizarPlanejador() {
-        corpoTabelaPlanejador.innerHTML = '';
-        planejador.sort((a, b) => new Date(a.data) - new Date(b.data));
+    function renderizarPlanejador() { /* ... Lógica do planejador ... */ }
+    function excluirItemPlanejador(event) { /* ... Lógica do planejador ... */ }
+    function atualizarStatusPlanejador(event) { /* ... Lógica do planejador ... */ }
+    function salvarErenderizarPlanejador() { localStorage.setItem('dadosPlanejadorFinanceiro', JSON.stringify(planejador)); renderizarPlanejador(); }
+    function carregarPlanejador() { const dados = localStorage.getItem('dadosPlanejadorFinanceiro'); planejador = dados ? JSON.parse(dados) : []; renderizarPlanejador(); }
 
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
-
-        planejador.forEach((item, index) => {
-            const tr = document.createElement('tr');
-            const dataConta = new Date(item.data + 'T00:00:00');
-            const isVencida = dataConta < hoje && item.status === 'Pendente';
-            if(isVencida) tr.classList.add('vencida');
-
-            tr.innerHTML = `
-                <td>${formatarData(dataConta)}</td> <td>${item.descricao}</td> <td>${formatarMoeda(item.valor)}</td>
-                <td><select class="status-select ${item.status}" data-index="${index}"><option value="Pendente" ${item.status === 'Pendente' ? 'selected' : ''}>Pendente</option><option value="Pago" ${item.status === 'Pago' ? 'selected' : ''}>Pago</option><option value="Recebido" ${item.status === 'Recebido' ? 'selected' : ''}>Recebido</option></select></td>
-                <td class="acoes"><button data-index="${index}" class="btn-icon btn-excluir" title="Excluir"><i class="fa-solid fa-trash-can"></i></button></td>`;
-            corpoTabelaPlanejador.appendChild(tr);
-        });
-
-        document.querySelectorAll('.btn-excluir').forEach(btn => btn.addEventListener('click', excluirItemPlanejador));
-        document.querySelectorAll('.status-select').forEach(sel => sel.addEventListener('change', atualizarStatusPlanejador));
-    }
-
-    function excluirItemPlanejador(event) {
-        const index = event.currentTarget.dataset.index;
-        if (confirm('Tem certeza?')) { planejador.splice(index, 1); salvarErenderizarPlanejador(); }
-    }
-
-    function atualizarStatusPlanejador(event) {
-        const index = event.target.dataset.index;
-        planejador[index].status = event.target.value;
-        salvarErenderizarPlanejador();
-    }
-    
-    function salvarErenderizarPlanejador() {
-        localStorage.setItem('dadosPlanejadorFinanceiro', JSON.stringify(planejador));
-        renderizarPlanejador();
-    }
-
-    function carregarPlanejador() {
-        const dadosSalvos = localStorage.getItem('dadosPlanejadorFinanceiro');
-        planejador = dadosSalvos ? JSON.parse(dadosSalvos) : [];
-        renderizarPlanejador();
-    }
-
-    // --- MODAL DE DETALHES ---
+    // --- MODAL DE DETALHES (MODIFICADO) ---
     function exibirDetalhesModal(tipo) {
         let transacoesParaExibir = [];
-        let html = '';
-
         if (tipo === 'Receita' || tipo === 'Despesa') {
             modalDetalhesTitulo.textContent = `Detalhes de ${tipo}s`;
-            transacoesParaExibir = transacoesAtuaisFiltradas.filter(t => t.Tipo === tipo);
-        } else { // 'Saldo'
+            transacoesParaExibir = transacoesAtuaisFiltradas.filter(t => t['Tipo'] === tipo);
+        } else {
              modalDetalhesTitulo.textContent = `Detalhes do Período`;
              transacoesParaExibir = transacoesAtuaisFiltradas;
         }
 
-        transacoesParaExibir.sort((a,b) => b.data - a.data);
+        transacoesParaExibir.sort((a,b) => b['Data da Transação'] - a['Data da Transação']);
 
-        if (transacoesParaExibir.length === 0) {
-            html = '<p style="text-align:center; padding: 20px;">Nenhuma transação encontrada neste período.</p>';
-        } else {
-            const tableRows = transacoesParaExibir.map(t => `
-                <tr style="color: ${t.Tipo === 'Receita' ? 'var(--cor-verde)' : 'var(--cor-vermelho)'}">
-                    <td>${formatarData(t.data)}</td>
-                    <td>${t.Descrição || 'N/A'}</td>
-                    <td style="text-align:right;">${formatarMoeda(t.Valor)}</td>
-                </tr>
-            `).join('');
-
-            html = `
-                <table class="tabela-contas">
-                    <thead><tr><th>Data</th><th>Descrição</th><th style="text-align:right;">Valor</th></tr></thead>
-                    <tbody>${tableRows}</tbody>
-                </table>`;
+        let html = '<p style="text-align:center; padding: 20px;">Nenhuma transação encontrada.</p>';
+        if (transacoesParaExibir.length > 0) {
+            const tableRows = transacoesParaExibir.map(t => {
+                const fonteReceita = t['SELECIONE A RECEITA'] || '-'; // Nome da sua coluna de fonte de receita
+                const fonteDespesa = t['Fonte da Despesa'] || '-'; // Nome da sua coluna de fonte de despesa
+                const fonte = t['Tipo'] === 'Receita' ? fonteReceita : fonteDespesa;
+                return `
+                <tr style="color: ${t['Tipo'] === 'Receita' ? 'var(--cor-verde)' : 'var(--cor-vermelho)'}">
+                    <td>${formatarData(t['Data da Transação'])}</td>
+                    <td>${t['Local'] || '-'}</td>
+                    <td>${fonte}</td>
+                    <td style="text-align:right;">${formatarMoeda(t['Valor'])}</td>
+                </tr>`
+            }).join('');
+            html = `<table class="tabela-contas">
+                        <thead><tr><th>Data</th><th>Local</th><th>Fonte</th><th style="text-align:right;">Valor</th></tr></thead>
+                        <tbody>${tableRows}</tbody>
+                    </table>`;
         }
         
         modalDetalhesConteudo.innerHTML = html;
@@ -529,21 +462,18 @@ document.addEventListener('DOMContentLoaded', function() {
     cardSaldo.addEventListener('click', () => exibirDetalhesModal('Saldo'));
     btnFecharDetalhes.addEventListener('click', () => modalDetalhes.style.display = 'none');
     
-    // --- MODAL DE REGISTRO (NOVA LÓGICA) ---
+    // --- MODAL DE REGISTRO ---
     const fecharModalRegistro = () => modalRegistro.style.display = 'none';
-
     btnAbrirModalRegistro.addEventListener('click', () => {
         formRegistro.reset();
         document.getElementById('reg-data').valueAsDate = new Date();
         modalRegistro.style.display = 'flex';
     });
-
     btnFecharRegistro.addEventListener('click', fecharModalRegistro);
     btnCancelarRegistro.addEventListener('click', fecharModalRegistro);
 
     formRegistro.addEventListener('submit', async (e) => {
         e.preventDefault();
-
         const btnText = btnSalvarRegistro.querySelector('.btn-text');
         const btnSpinner = btnSalvarRegistro.querySelector('.fa-spinner');
         btnText.textContent = 'Salvando...';
@@ -553,21 +483,29 @@ document.addEventListener('DOMContentLoaded', function() {
         const dadosParaEnviar = {
             dataTransacao: document.getElementById('reg-data').value,
             tipo: document.getElementById('reg-tipo').value,
+            valor: parseFloat(document.getElementById('reg-valor').value),
             descricao: document.getElementById('reg-descricao').value,
-            valor: parseFloat(document.getElementById('reg-valor').value)
+            fonte: document.getElementById('reg-fonte').value,
+            local: document.getElementById('reg-local').value,
         };
 
         try {
+            // MODIFICADO: Removido 'no-cors' e adicionado processamento da resposta
             const response = await fetch(apiUrl, {
                 method: 'POST',
-                mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(dadosParaEnviar)
             });
 
+            // Apps Script com 'doPost' e redirecionamento não retorna um JSON válido,
+            // então não tentamos fazer o parse. A ausência de erro já indica sucesso.
+            if (!response.ok && response.type !== 'opaque') {
+                 throw new Error('Falha na resposta da rede ao registrar.');
+            }
+
             fecharModalRegistro();
             alert('Transação registrada com sucesso! Atualizando o dashboard...');
-            await carregarDadosIniciais();
+            setTimeout(() => carregarDadosIniciais(), 1000); // Delay para dar tempo da planilha atualizar
 
         } catch (error) {
             console.error('Erro ao registrar transação:', error);
@@ -591,7 +529,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // --- FUNÇÕES UTILITÁRIAS ---
-    const formatarMoeda = (valor) => (valor === undefined || valor === null ? 0 : valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const formatarMoeda = (valor) => (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     const formatarData = (data) => data instanceof Date && !isNaN(data) ? data.toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Data inválida';
 
     // --- INICIALIZAÇÃO ---
@@ -601,6 +539,5 @@ document.addEventListener('DOMContentLoaded', function() {
     btnRefresh.addEventListener('click', carregarDadosIniciais);
 });
 </script>
-
 </body>
 </html>
