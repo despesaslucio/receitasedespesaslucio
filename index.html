@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Financeiro Aprimorado</title>
+    <title>Dashboard Financeiro Definitivo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
@@ -63,11 +63,6 @@
         .tabela-contas th, .tabela-contas td { text-align: left; padding: 14px; border-bottom: 1px solid var(--cor-borda); }
         .tabela-contas thead { position: sticky; top: 0; background-color: var(--cor-card); z-index: 1; }
         .tabela-contas tbody tr:hover { background-color: var(--cor-fundo); }
-        .status-select { border: 1px solid var(--cor-borda); background: transparent; font-weight: 500; padding: 5px 10px; border-radius: 15px; font-size: 0.9em; -webkit-appearance: none; -moz-appearance: none; appearance: none; }
-        .status-select.Pendente { background-color: #fef3c7; color: #d97706; border-color: #fbbf24; }
-        .status-select.Pago, .status-select.Recebido { background-color: #d1fae5; color: #059669; border-color: #34d399; }
-        .tabela-contas tbody tr.vencida { background-color: #fee2e2; color: #b91c1c; }
-        .tabela-contas tbody tr.vencida:hover { background-color: #fecaca; }
 
         .modal-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; animation: fadeIn 0.3s ease; }
         .modal-content { background-color: var(--cor-card); padding: 30px; border-radius: 12px; width: 90%; max-width: 600px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: scaleUp 0.3s ease; max-height: 90vh; display: flex; flex-direction: column; }
@@ -85,16 +80,10 @@
         .btn-cancelar:hover { background-color: #b3b3b3; }
 
         @media (max-width: 1200px) { .grid-principal { grid-template-columns: 1fr; } }
-        @media (max-width: 768px) {
-            body { padding: 10px; }
-            header h1 { font-size: 1.5em; }
-            .secao-filtros, .grupo-filtro { flex-direction: column; align-items: stretch; }
-            .grupo-filtro > div { display: flex; justify-content: space-around; width: 100%;}
-        }
+        @media (max-width: 768px) { body { padding: 10px; } header h1 { font-size: 1.5em; } .secao-filtros, .grupo-filtro { flex-direction: column; align-items: stretch; } .grupo-filtro > div { display: flex; justify-content: space-around; width: 100%;} }
     </style>
 </head>
 <body>
-
     <div class="container">
         <header>
             <div class="header-title">
@@ -108,7 +97,6 @@
                 </button>
             </div>
         </header>
-
         <main>
             <section class="cards-resumo">
                 <div class="card receitas clicavel" id="card-receitas"><div class="card-header"><span>Receitas</span><i class="fa-solid fa-circle-arrow-up"></i></div><p class="valor" id="total-receitas">R$ 0,00</p></div>
@@ -127,26 +115,9 @@
                 <section class="grid-principal">
                     <div class="widget"> <h2 id="titulo-grafico">Evolução Financeira</h2> <div class="chart-container"> <canvas id="grafico-linhas"></canvas> <p id="msg-grafico-linhas" class="empty-chart-message"><i class="fa-solid fa-chart-simple"></i><br>Sem dados para exibir</p> </div> </div>
                     <div class="widget"> <h2 id="titulo-categorias">Top 10 Despesas por Local</h2> <div class="chart-container"> <canvas id="grafico-categorias"></canvas> <p id="msg-grafico-categorias" class="empty-chart-message"><i class="fa-solid fa-chart-simple"></i><br>Sem dados para exibir</p> </div> </div>
-                    <div class="widget" style="grid-column: 1 / -1;"> <h2>Planejador de Contas <button class="btn-icon" id="btn-adicionar-conta" title="Adicionar conta">+</button></h2> <div class="tabela-contas-wrapper"> <table class="tabela-contas"> <thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead> <tbody id="corpo-tabela-planejador"></tbody> </table> </div> </div>
                 </section>
             </div>
         </main>
-    </div>
-    
-    <div id="modal-planejador" class="modal-container">
-        <div class="modal-content">
-            <div class="modal-header"><h2>Adicionar/Editar Conta</h2> <button id="btn-fechar-planejador" class="btn-icon">&times;</button> </div>
-            <div class="modal-body">
-                <form id="form-planejador">
-                    <input type="hidden" id="form-id">
-                    <div class="form-grupo"> <label for="form-data">Data de Vencimento</label> <input type="date" id="form-data" required> </div>
-                    <div class="form-grupo"> <label for="form-descricao">Descrição</label> <input type="text" id="form-descricao" placeholder="Ex: Conta de Luz" required> </div>
-                    <div class="form-grupo"> <label for="form-valor">Valor</label> <input type="number" id="form-valor" placeholder="Ex: 150.50" step="0.01" required> </div>
-                    <div class="form-grupo"> <label for="form-status">Status</label> <select id="form-status" required> <option value="Pendente">Pendente</option> <option value="Pago">Pago</option> <option value="Recebido">Recebido</option> </select> </div>
-                    <div class="form-botoes"> <button type="button" class="btn btn-cancelar" id="btn-cancelar-modal">Cancelar</button> <button type="submit" class="btn btn-nova-transacao">Salvar</button> </div>
-                </form>
-            </div>
-        </div>
     </div>
     
     <div id="modal-detalhes" class="modal-container">
@@ -179,12 +150,11 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // --- CONFIGURAÇÃO ---
-    const apiUrl = 'https://script.google.com/macros/s/AKfycbxyWusoFr55QBe-1ki6ZWrqSnZoHC3OSBaZaklUcrFMRt1q8K0j8JrGuYCp3p8lZ3D3/exec';
+    const apiUrl = 'COLE A SUA NOVA URL AQUI';
     
     // --- VARIÁVEIS GLOBAIS ---
     let transacoesGeral = [];
     let transacoesAtuaisFiltradas = [];
-    let planejador = [];
     let graficoLinhas = null;
     let graficoCategorias = null;
 
@@ -194,19 +164,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const totalReceitasEl = document.getElementById('total-receitas');
     const totalDespesasEl = document.getElementById('total-despesas');
     const saldoTotalEl = document.getElementById('saldo-total');
-    const corpoTabelaPlanejador = document.getElementById('corpo-tabela-planejador');
     const tituloGraficoEl = document.getElementById('titulo-grafico');
-    const tituloCategoriasEl = document.getElementById('titulo-categorias');
     const btnRefresh = document.getElementById('btn-refresh');
     const btnToggleTheme = document.getElementById('btn-toggle-theme');
     const cardReceitas = document.getElementById('card-receitas');
     const cardDespesas = document.getElementById('card-despesas');
     const cardSaldo = document.getElementById('card-saldo');
-    const modalPlanejador = document.getElementById('modal-planejador');
-    const btnAdicionarConta = document.getElementById('btn-adicionar-conta');
-    const btnCancelarModal = document.getElementById('btn-cancelar-modal');
-    const btnFecharPlanejador = document.getElementById('btn-fechar-planejador');
-    const formPlanejador = document.getElementById('form-planejador');
     const modalDetalhes = document.getElementById('modal-detalhes');
     const modalDetalhesTitulo = document.getElementById('modal-detalhes-titulo');
     const modalDetalhesConteudo = document.getElementById('modal-detalhes-conteudo');
@@ -224,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function() {
         dashboardContentDiv.style.display = 'none';
         btnRefresh.firstElementChild.classList.add('fa-spin');
         
-        if (!apiUrl || apiUrl === 'COLE_SUA_NOVA_URL_AQUI') {
+        if (!apiUrl || apiUrl === 'COLE A SUA NOVA URL AQUI') {
             loadingDiv.innerHTML = `<p style="color:var(--cor-vermelho);"><i class="fa-solid fa-triangle-exclamation"></i> Erro: A URL da API não foi configurada.</p>`;
             return;
         }
@@ -246,7 +209,7 @@ document.addEventListener('DOMContentLoaded', function() {
             dashboardContentDiv.style.display = 'block';
         } catch (error) {
             console.error('Erro ao buscar dados:', error);
-            loadingDiv.innerHTML = `<p style="color:var(--cor-vermelho);"><i class="fa-solid fa-circle-xmark"></i> Falha ao carregar: ${error.message}. Verifique se a URL da API está correta e se o script foi re-implantado com acesso para "Qualquer pessoa".</p>`;
+            loadingDiv.innerHTML = `<p style="color:var(--cor-vermelho);"><i class="fa-solid fa-circle-xmark"></i> Falha ao carregar: ${error.message}. Verifique o nome da aba no seu script e re-implante-o.</p>`;
         } finally {
             btnRefresh.firstElementChild.classList.remove('fa-spin');
         }
@@ -364,17 +327,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    const fecharModalPlanejador = () => modalPlanejador.style.display = 'none';
-    btnAdicionarConta.addEventListener('click', () => { formPlanejador.reset(); modalPlanejador.style.display = 'flex'; });
-    btnCancelarModal.addEventListener('click', fecharModalPlanejador);
-    btnFecharPlanejador.addEventListener('click', fecharModalPlanejador);
-    formPlanejador.addEventListener('submit', (e) => { e.preventDefault(); const novaConta = { data: document.getElementById('form-data').value, descricao: document.getElementById('form-descricao').value, valor: parseFloat(document.getElementById('form-valor').value), status: document.getElementById('form-status').value }; planejador.push(novaConta); salvarErenderizarPlanejador(); fecharModalPlanejador(); });
-    function renderizarPlanejador() { corpoTabelaPlanejador.innerHTML = ''; planejador.sort((a, b) => new Date(a.data) - new Date(b.data)); const hoje = new Date(); hoje.setHours(0, 0, 0, 0); planejador.forEach((item, index) => { const tr = document.createElement('tr'); const dataConta = new Date(item.data + 'T00:00:00'); const isVencida = dataConta < hoje && item.status === 'Pendente'; if(isVencida) tr.classList.add('vencida'); tr.innerHTML = `<td>${formatarData(dataConta)}</td> <td>${item.descricao}</td> <td>${formatarMoeda(item.valor)}</td> <td><select class="status-select ${item.status}" data-index="${index}"><option value="Pendente" ${item.status === 'Pendente' ? 'selected' : ''}>Pendente</option><option value="Pago" ${item.status === 'Pago' ? 'selected' : ''}>Pago</option><option value="Recebido" ${item.status === 'Recebido' ? 'selected' : ''}>Recebido</option></select></td> <td class="acoes"><button data-index="${index}" class="btn-icon btn-excluir" title="Excluir"><i class="fa-solid fa-trash-can"></i></button></td>`; corpoTabelaPlanejador.appendChild(tr); }); document.querySelectorAll('.btn-excluir').forEach(btn => btn.addEventListener('click', excluirItemPlanejador)); document.querySelectorAll('.status-select').forEach(sel => sel.addEventListener('change', atualizarStatusPlanejador)); }
-    function excluirItemPlanejador(event) { const index = event.currentTarget.dataset.index; if (confirm('Tem certeza?')) { planejador.splice(index, 1); salvarErenderizarPlanejador(); } }
-    function atualizarStatusPlanejador(event) { const index = event.target.dataset.index; planejador[index].status = event.target.value; salvarErenderizarPlanejador(); }
-    function salvarErenderizarPlanejador() { localStorage.setItem('dadosPlanejadorFinanceiro', JSON.stringify(planejador)); renderizarPlanejador(); }
-    function carregarPlanejador() { const dados = localStorage.getItem('dadosPlanejadorFinanceiro'); planejador = dados ? JSON.parse(dados) : []; renderizarPlanejador(); }
-
     function exibirDetalhesModal(tipo) {
         let transacoesParaExibir = [];
         if (tipo === 'Receita' || tipo === 'Despesa') {
@@ -390,7 +342,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let html = '<p style="text-align:center; padding: 20px;">Nenhuma transação encontrada.</p>';
         if (transacoesParaExibir.length > 0) {
             const tableRows = transacoesParaExibir.map(t => {
-                const fonte = t['Fonte'] || t['Fonte (Receita ou Despesa)'] || t['SELECIONE A RECEITA'] || '-';
+                const fonte = t['Fonte'] || '-';
                 return `
                 <tr style="color: ${t['Tipo'] === 'Receita' ? 'var(--cor-verde)' : 'var(--cor-vermelho)'}">
                     <td>${formatarData(t['Data da Transação'])}</td>
@@ -479,7 +431,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const formatarData = (data) => data instanceof Date && !isNaN(data) ? data.toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Data inválida';
 
     aplicarTema(localStorage.getItem('temaDashboard') || 'light');
-    carregarPlanejador();
+    // A função do planejador foi removida para simplificar, você pode adicionar de volta se precisar.
     carregarDadosIniciais();
     btnRefresh.addEventListener('click', carregarDadosIniciais);
 });
