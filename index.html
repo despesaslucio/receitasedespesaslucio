@@ -205,7 +205,8 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // --- CONFIGURAÇÃO ---
-    const apiUrl = 'COLE_SUA_NOVA_URL_AQUI'; // <-- IMPORTANTE: COLE A NOVA URL GERADA PELO APPS SCRIPT AQUI!
+    // <-- URL CORRETA INSERIDA AQUI
+    const apiUrl = 'https://script.google.com/macros/s/AKfycbz4NLQeGz6oMIBOsZUafaXT-H0tKfqf9cRLQh7vLm-IZ7mKS0sqY-4pfhzgOzPhKLMe/exec';
     
     // --- VARIÁVEIS GLOBAIS ---
     let transacoesGeral = [];
@@ -254,18 +255,17 @@ document.addEventListener('DOMContentLoaded', function() {
         dashboardContentDiv.style.display = 'none';
         btnRefresh.firstElementChild.classList.add('fa-spin');
         
-        if (!apiUrl || apiUrl === 'https://script.google.com/macros/s/AKfycbz4NLQeGz6oMIBOsZUafaXT-H0tKfqf9cRLQh7vLm-IZ7mKS0sqY-4pfhzgOzPhKLMe/exec') {
+        // <-- VERIFICAÇÃO DE SEGURANÇA CORRIGIDA
+        if (!apiUrl || apiUrl === 'COLE_SUA_NOVA_URL_AQUI') {
             loadingDiv.innerHTML = `<p style="color:var(--cor-vermelho);"><i class="fa-solid fa-triangle-exclamation"></i> Erro: A URL da API não foi configurada.</p>`;
             return;
         }
         try {
-            // Removido o cache_bust, pois o CORS correto não precisa disso.
             const response = await fetch(apiUrl);
             if (!response.ok) throw new Error(`Erro na rede: ${response.statusText}`);
             const data = await response.json();
             if (!Array.isArray(data)) throw new Error('Dados recebidos da API não são uma lista.');
             
-            // MODIFICADO: Mapeia a data para o formato correto.
             transacoesGeral = data.map(item => ({...item, 'Data da Transação': new Date(item['Data da Transação'])}));
             
             aplicarFiltros();
@@ -274,7 +274,7 @@ document.addEventListener('DOMContentLoaded', function() {
             dashboardContentDiv.style.display = 'block';
         } catch (error) {
             console.error('Erro ao buscar dados:', error);
-            loadingDiv.innerHTML = `<p style="color:var(--cor-vermelho);"><i class="fa-solid fa-circle-xmark"></i> Falha ao carregar: ${error.message}. Verifique se a URL da API está correta e se o script foi re-implantado.</p>`;
+            loadingDiv.innerHTML = `<p style="color:var(--cor-vermelho);"><i class="fa-solid fa-circle-xmark"></i> Falha ao carregar: ${error.message}. Verifique se a URL da API está correta e se o script foi re-implantado com acesso para "Qualquer pessoa".</p>`;
         } finally {
             btnRefresh.firstElementChild.classList.remove('fa-spin');
         }
@@ -285,7 +285,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const periodoFiltro = document.querySelector('#filtro-periodo .active').dataset.periodo;
         
         transacoesAtuaisFiltradas = transacoesGeral.filter(t => {
-            // Renomeado para 'Tipo' para bater com o nome da coluna esperado
             if (tipoFiltro !== 'Todos' && t['Tipo'] !== tipoFiltro) return false;
             const hoje = new Date();
             switch(periodoFiltro) {
@@ -310,7 +309,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- FILTROS ---
     document.querySelectorAll('.btn-filtro').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            e.target.parentElement.querySelector('.active').classList.remove('active');
+            e.target.closest('.grupo-filtro').querySelector('.active').classList.remove('active');
             e.target.classList.add('active');
             aplicarFiltros();
         });
@@ -372,7 +371,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // MODIFICADO: Gráfico de categorias agora agrupa por 'Local'
     function criarGraficoCategorias(transacoes) {
         const ctx = document.getElementById('grafico-categorias').getContext('2d');
         const despesas = transacoes.filter(t => t['Tipo'] === 'Despesa');
@@ -385,7 +383,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('msg-grafico-categorias').style.display = 'none';
 
         const dadosAgrupados = despesas.reduce((acc, t) => {
-            const local = t['Local'] || 'Não especificado'; // Agrupa por Local
+            const local = t['Local'] || 'Não especificado';
             if (!acc[local]) acc[local] = 0;
             acc[local] += t['Valor'];
             return acc;
@@ -414,13 +412,28 @@ document.addEventListener('DOMContentLoaded', function() {
         fecharModalPlanejador();
     });
 
-    function renderizarPlanejador() { /* ... Lógica do planejador ... */ }
-    function excluirItemPlanejador(event) { /* ... Lógica do planejador ... */ }
-    function atualizarStatusPlanejador(event) { /* ... Lógica do planejador ... */ }
+    function renderizarPlanejador() {
+        corpoTabelaPlanejador.innerHTML = '';
+        planejador.sort((a, b) => new Date(a.data) - new Date(b.data));
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        planejador.forEach((item, index) => {
+            const tr = document.createElement('tr');
+            const dataConta = new Date(item.data + 'T00:00:00');
+            const isVencida = dataConta < hoje && item.status === 'Pendente';
+            if(isVencida) tr.classList.add('vencida');
+            tr.innerHTML = `<td>${formatarData(dataConta)}</td> <td>${item.descricao}</td> <td>${formatarMoeda(item.valor)}</td> <td><select class="status-select ${item.status}" data-index="${index}"><option value="Pendente" ${item.status === 'Pendente' ? 'selected' : ''}>Pendente</option><option value="Pago" ${item.status === 'Pago' ? 'selected' : ''}>Pago</option><option value="Recebido" ${item.status === 'Recebido' ? 'selected' : ''}>Recebido</option></select></td> <td class="acoes"><button data-index="${index}" class="btn-icon btn-excluir" title="Excluir"><i class="fa-solid fa-trash-can"></i></button></td>`;
+            corpoTabelaPlanejador.appendChild(tr);
+        });
+        document.querySelectorAll('.btn-excluir').forEach(btn => btn.addEventListener('click', excluirItemPlanejador));
+        document.querySelectorAll('.status-select').forEach(sel => sel.addEventListener('change', atualizarStatusPlanejador));
+    }
+    function excluirItemPlanejador(event) { const index = event.currentTarget.dataset.index; if (confirm('Tem certeza?')) { planejador.splice(index, 1); salvarErenderizarPlanejador(); } }
+    function atualizarStatusPlanejador(event) { const index = event.target.dataset.index; planejador[index].status = event.target.value; salvarErenderizarPlanejador(); }
     function salvarErenderizarPlanejador() { localStorage.setItem('dadosPlanejadorFinanceiro', JSON.stringify(planejador)); renderizarPlanejador(); }
     function carregarPlanejador() { const dados = localStorage.getItem('dadosPlanejadorFinanceiro'); planejador = dados ? JSON.parse(dados) : []; renderizarPlanejador(); }
 
-    // --- MODAL DE DETALHES (MODIFICADO) ---
+    // --- MODAL DE DETALHES ---
     function exibirDetalhesModal(tipo) {
         let transacoesParaExibir = [];
         if (tipo === 'Receita' || tipo === 'Despesa') {
@@ -436,9 +449,8 @@ document.addEventListener('DOMContentLoaded', function() {
         let html = '<p style="text-align:center; padding: 20px;">Nenhuma transação encontrada.</p>';
         if (transacoesParaExibir.length > 0) {
             const tableRows = transacoesParaExibir.map(t => {
-                const fonteReceita = t['SELECIONE A RECEITA'] || '-'; // Nome da sua coluna de fonte de receita
-                const fonteDespesa = t['Fonte da Despesa'] || '-'; // Nome da sua coluna de fonte de despesa
-                const fonte = t['Tipo'] === 'Receita' ? fonteReceita : fonteDespesa;
+                // IMPORTANTE: Verifique se os nomes das colunas aqui batem com os da sua planilha
+                const fonte = t['Fonte (Receita ou Despesa)'] || t['SELECIONE A RECEITA'] || '-';
                 return `
                 <tr style="color: ${t['Tipo'] === 'Receita' ? 'var(--cor-verde)' : 'var(--cor-vermelho)'}">
                     <td>${formatarData(t['Data da Transação'])}</td>
@@ -490,26 +502,23 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         try {
-            // MODIFICADO: Removido 'no-cors' e adicionado processamento da resposta
             const response = await fetch(apiUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dadosParaEnviar)
+                body: JSON.stringify(dadosParaEnviar) // Não precisa de headers ou mode:'no-cors' com o script corrigido
             });
-
-            // Apps Script com 'doPost' e redirecionamento não retorna um JSON válido,
-            // então não tentamos fazer o parse. A ausência de erro já indica sucesso.
-            if (!response.ok && response.type !== 'opaque') {
-                 throw new Error('Falha na resposta da rede ao registrar.');
+            
+            const result = await response.json();
+            if (result.status !== 'success') {
+                throw new Error(result.message || 'Erro desconhecido ao salvar.');
             }
 
             fecharModalRegistro();
             alert('Transação registrada com sucesso! Atualizando o dashboard...');
-            setTimeout(() => carregarDadosIniciais(), 1000); // Delay para dar tempo da planilha atualizar
+            setTimeout(() => carregarDadosIniciais(), 1000);
 
         } catch (error) {
             console.error('Erro ao registrar transação:', error);
-            alert('Ocorreu um erro ao registrar a transação. Tente novamente.');
+            alert('Ocorreu um erro ao registrar a transação: ' + error.message);
         } finally {
             btnText.textContent = 'Salvar';
             btnSpinner.style.display = 'none';
