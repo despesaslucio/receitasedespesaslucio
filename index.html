@@ -36,7 +36,6 @@
         .cards-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; margin-bottom: 25px; }
         .card { background-color: var(--cor-card); padding: 25px; border-radius: 12px; box-shadow: var(--sombra-card); border: 1px solid var(--cor-borda); transition: var(--transicao); }
         .card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
-        /* NOVO: Cursor para indicar que os cards são clicáveis */
         .card.clicavel { cursor: pointer; }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; color: var(--cor-texto-leve); font-weight: 500; }
         .card-header i { font-size: 2em; }
@@ -104,9 +103,9 @@
             </div>
             <div style="display: flex; align-items: center; gap: 15px;">
                 <button class="btn-icon" id="btn-toggle-theme" title="Mudar tema"><i class="fa-solid fa-moon"></i></button>
-                <a href="https://docs.google.com/forms/d/e/1FAIpQLSdbwWl5uibDr2fAOWsEu10mzTKZ5ncHXyVi-PcY2KjmGqQOYw/viewform?usp=sharing" target="_blank" class="btn btn-nova-transacao">
+                <button id="btn-abrir-modal-registro" class="btn btn-nova-transacao">
                     <i class="fa-solid fa-plus"></i> Registrar
-                </a>
+                </button>
             </div>
         </header>
 
@@ -174,20 +173,57 @@
                 <h2 id="modal-detalhes-titulo">Detalhes</h2>
                 <button id="btn-fechar-detalhes" class="btn-icon">&times;</button>
             </div>
-            <div id="modal-detalhes-conteudo" class="modal-body">
-                </div>
+            <div id="modal-detalhes-conteudo" class="modal-body"></div>
         </div>
     </div>
 
+    <div id="modal-registro" class="modal-container">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Registrar Nova Transação</h2>
+                <button id="btn-fechar-registro" class="btn-icon">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-registro">
+                    <div class="form-grupo">
+                        <label for="reg-data">Data da Transação</label>
+                        <input type="date" id="reg-data" required>
+                    </div>
+                    <div class="form-grupo">
+                        <label for="reg-tipo">Tipo</label>
+                        <select id="reg-tipo" required>
+                            <option value="Despesa">Despesa</option>
+                            <option value="Receita">Receita</option>
+                        </select>
+                    </div>
+                    <div class="form-grupo">
+                        <label for="reg-descricao">Descrição</label>
+                        <input type="text" id="reg-descricao" placeholder="Ex: Supermercado, Salário" required>
+                    </div>
+                    <div class="form-grupo">
+                        <label for="reg-valor">Valor</label>
+                        <input type="number" id="reg-valor" placeholder="150.50" step="0.01" required>
+                    </div>
+                    <div class="form-botoes">
+                        <button type="button" class="btn btn-cancelar" id="btn-cancelar-registro">Cancelar</button>
+                        <button type="submit" class="btn btn-nova-transacao" id="btn-salvar-registro">
+                            <span class="btn-text">Salvar</span>
+                            <i class="fa-solid fa-spinner fa-spin" style="display: none;"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // --- CONFIGURAÇÃO ---
-    const apiUrl = 'https://script.google.com/macros/s/AKfycby40pzoPq072nfjVCi7tQt5PACjt72lN8HFQBxDNMwehJCw2rE-XTF5pnQRVIa0Df1U/exec';
+    const apiUrl = 'https://script.google.com/macros/s/AKfycbx-7i3AXFcyqvutp0BrKAoBPlzjv8HCHDmowP2f-3gi6HS3oW7cxY_79aqdl-hgQrJz/exec';
     
     // --- VARIÁVEIS GLOBAIS ---
     let transacoesGeral = [];
-    let transacoesAtuaisFiltradas = []; // NOVO
+    let transacoesAtuaisFiltradas = [];
     let planejador = [];
     let graficoLinhas = null;
     let graficoCategorias = null;
@@ -203,9 +239,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnRefresh = document.getElementById('btn-refresh');
     const btnToggleTheme = document.getElementById('btn-toggle-theme');
 
-    const cardReceitas = document.getElementById('card-receitas'); // NOVO
-    const cardDespesas = document.getElementById('card-despesas'); // NOVO
-    const cardSaldo = document.getElementById('card-saldo'); // NOVO
+    const cardReceitas = document.getElementById('card-receitas');
+    const cardDespesas = document.getElementById('card-despesas');
+    const cardSaldo = document.getElementById('card-saldo');
 
     // Modal Planejador
     const modalPlanejador = document.getElementById('modal-planejador');
@@ -214,17 +250,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnFecharPlanejador = document.getElementById('btn-fechar-planejador');
     const formPlanejador = document.getElementById('form-planejador');
 
-    // Modal Detalhes (NOVO)
+    // Modal Detalhes
     const modalDetalhes = document.getElementById('modal-detalhes');
     const modalDetalhesTitulo = document.getElementById('modal-detalhes-titulo');
     const modalDetalhesConteudo = document.getElementById('modal-detalhes-conteudo');
     const btnFecharDetalhes = document.getElementById('btn-fechar-detalhes');
 
+    // Modal Registro (NOVO)
+    const modalRegistro = document.getElementById('modal-registro');
+    const btnAbrirModalRegistro = document.getElementById('btn-abrir-modal-registro');
+    const btnFecharRegistro = document.getElementById('btn-fechar-registro');
+    const btnCancelarRegistro = document.getElementById('btn-cancelar-registro');
+    const formRegistro = document.getElementById('form-registro');
+    const btnSalvarRegistro = document.getElementById('btn-salvar-registro');
+
     // --- FUNÇÕES DE INICIALIZAÇÃO E DADOS ---
     async function carregarDadosIniciais() {
         loadingDiv.style.display = 'block';
         dashboardContentDiv.style.display = 'none';
-        btnRefresh.firstElementChild.classList.add('fa-spin'); // Animação de loading
+        btnRefresh.firstElementChild.classList.add('fa-spin');
         
         if (!apiUrl || apiUrl === 'SUA_URL_DA_API_AQUI') {
             loadingDiv.innerHTML = `<p style="color:var(--cor-vermelho);"><i class="fa-solid fa-triangle-exclamation"></i> Erro: A URL da API não foi configurada.</p>`;
@@ -246,7 +290,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Erro ao buscar dados:', error);
             loadingDiv.innerHTML = `<p style="color:var(--cor-vermelho);"><i class="fa-solid fa-circle-xmark"></i> Falha ao carregar: ${error.message}</p>`;
         } finally {
-            btnRefresh.firstElementChild.classList.remove('fa-spin'); // Remove animação
+            btnRefresh.firstElementChild.classList.remove('fa-spin');
         }
     }
     
@@ -254,7 +298,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const tipoFiltro = document.querySelector('#filtro-tipo .active').dataset.tipo;
         const periodoFiltro = document.querySelector('#filtro-periodo .active').dataset.periodo;
         
-        // NOVO: Armazena as transações filtradas para uso no modal
         transacoesAtuaisFiltradas = transacoesGeral.filter(t => {
             if (tipoFiltro !== 'Todos' && t.Tipo !== tipoFiltro) return false;
             const hoje = new Date();
@@ -322,7 +365,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const dadosAgrupados = transacoes.reduce((acc, t) => {
             if (!t.data || isNaN(t.data.getTime())) return acc;
             
-            // CORREÇÃO: Substituído dateFns.startOf por JS nativo
             let chaveObj;
             const d = t.data;
             if (unit === 'hour') chaveObj = new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours());
@@ -403,7 +445,6 @@ document.addEventListener('DOMContentLoaded', function() {
         corpoTabelaPlanejador.innerHTML = '';
         planejador.sort((a, b) => new Date(a.data) - new Date(b.data));
 
-        // CORREÇÃO: Substituído dateFns.startOf por JS nativo
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
 
@@ -446,7 +487,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderizarPlanejador();
     }
 
-    // --- NOVO: MODAL DE DETALHES ---
+    // --- MODAL DE DETALHES ---
     function exibirDetalhesModal(tipo) {
         let transacoesParaExibir = [];
         let html = '';
@@ -459,7 +500,7 @@ document.addEventListener('DOMContentLoaded', function() {
              transacoesParaExibir = transacoesAtuaisFiltradas;
         }
 
-        transacoesParaExibir.sort((a,b) => b.data - a.data); // Ordena da mais recente para a mais antiga
+        transacoesParaExibir.sort((a,b) => b.data - a.data);
 
         if (transacoesParaExibir.length === 0) {
             html = '<p style="text-align:center; padding: 20px;">Nenhuma transação encontrada neste período.</p>';
@@ -488,6 +529,56 @@ document.addEventListener('DOMContentLoaded', function() {
     cardSaldo.addEventListener('click', () => exibirDetalhesModal('Saldo'));
     btnFecharDetalhes.addEventListener('click', () => modalDetalhes.style.display = 'none');
     
+    // --- MODAL DE REGISTRO (NOVA LÓGICA) ---
+    const fecharModalRegistro = () => modalRegistro.style.display = 'none';
+
+    btnAbrirModalRegistro.addEventListener('click', () => {
+        formRegistro.reset();
+        document.getElementById('reg-data').valueAsDate = new Date();
+        modalRegistro.style.display = 'flex';
+    });
+
+    btnFecharRegistro.addEventListener('click', fecharModalRegistro);
+    btnCancelarRegistro.addEventListener('click', fecharModalRegistro);
+
+    formRegistro.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const btnText = btnSalvarRegistro.querySelector('.btn-text');
+        const btnSpinner = btnSalvarRegistro.querySelector('.fa-spinner');
+        btnText.textContent = 'Salvando...';
+        btnSpinner.style.display = 'inline-block';
+        btnSalvarRegistro.disabled = true;
+
+        const dadosParaEnviar = {
+            dataTransacao: document.getElementById('reg-data').value,
+            tipo: document.getElementById('reg-tipo').value,
+            descricao: document.getElementById('reg-descricao').value,
+            valor: parseFloat(document.getElementById('reg-valor').value)
+        };
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dadosParaEnviar)
+            });
+
+            fecharModalRegistro();
+            alert('Transação registrada com sucesso! Atualizando o dashboard...');
+            await carregarDadosIniciais();
+
+        } catch (error) {
+            console.error('Erro ao registrar transação:', error);
+            alert('Ocorreu um erro ao registrar a transação. Tente novamente.');
+        } finally {
+            btnText.textContent = 'Salvar';
+            btnSpinner.style.display = 'none';
+            btnSalvarRegistro.disabled = false;
+        }
+    });
+
     // --- TEMA (CLARO/ESCURO) ---
     function aplicarTema(tema) {
         document.body.classList.toggle('dark-mode', tema === 'dark');
