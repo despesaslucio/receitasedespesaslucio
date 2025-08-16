@@ -71,7 +71,6 @@
                 </div>
             </div>
         </header>
-
         <main>
             <section class="cards-resumo">
                 <div class="card receitas clicavel" id="card-receitas"><div class="card-header"><span>Receitas</span><i class="fa-solid fa-circle-arrow-up"></i></div><p class="valor" id="total-receitas">R$ 0,00</p></div>
@@ -321,8 +320,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const dadosAgrupados = transacoes.reduce((acc, t) => {
             const d = t.Data;
             if (!d || isNaN(d.getTime())) return acc;
-            
-            // CORREÇÃO DO ERRO `dateFns.startOf`
             let chaveObj;
             if (unit === 'hour') chaveObj = new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours());
             else if (unit === 'day') chaveObj = new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -362,7 +359,21 @@ document.addEventListener('DOMContentLoaded', function() {
     cardDespesas.addEventListener('click', () => exibirDetalhesModal('Despesa'));
     cardSaldo.addEventListener('click', () => exibirDetalhesModal('Saldo'));
     btnFecharDetalhes.addEventListener('click', () => modalDetalhes.style.display = 'none');
-
+    
+    document.body.addEventListener('click', function(e) {
+        if (e.target.closest('.btn-marcar-pago')) {
+            const btn = e.target.closest('.btn-marcar-pago');
+            const index = btn.dataset.index;
+            const itemParaPagar = transacoesGeral[index];
+            if (confirm(`Deseja marcar a despesa "${itemParaPagar.Fonte}" de ${formatarMoeda(itemParaPagar.Valor)} como paga?`)) {
+                itemParaPagar.Status = 'Pago';
+                const dadosFinais = { ...itemParaPagar, data: dateFns.format(itemParaPagar.Data, 'yyyy-MM-dd') };
+                delete dadosFinais.Data;
+                submeterDados(dadosFinais, itemParaPagar);
+            }
+        }
+    });
+    
     formRegistro.addEventListener('submit', (e) => {
         e.preventDefault();
         const valorInput = document.getElementById('reg-valor').value.replace(/\./g, '').replace(',', '.');
@@ -380,20 +391,6 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Conta pendente adicionada ao planejador!');
         } else {
             submeterDados(dadosParaEnviar);
-        }
-    });
-    
-    document.body.addEventListener('click', function(e) {
-        if (e.target.closest('.btn-marcar-pago')) {
-            const btn = e.target.closest('.btn-marcar-pago');
-            const index = btn.dataset.index;
-            const itemParaPagar = transacoesGeral[index];
-            if (confirm(`Deseja marcar a despesa "${itemParaPagar.Fonte}" de ${formatarMoeda(itemParaPagar.Valor)} como paga?`)) {
-                itemParaPagar.Status = 'Pago';
-                const dadosFinais = { ...itemParaPagar, data: dateFns.format(itemParaPagar.Data, 'yyyy-MM-dd') };
-                delete dadosFinais.Data;
-                submeterDados(dadosFinais, itemParaPagar);
-            }
         }
     });
 
