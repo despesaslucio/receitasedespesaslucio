@@ -71,6 +71,7 @@
                 </div>
             </div>
         </header>
+
         <main>
             <section class="cards-resumo">
                 <div class="card receitas clicavel" id="card-receitas"><div class="card-header"><span>Receitas</span><i class="fa-solid fa-circle-arrow-up"></i></div><p class="valor" id="total-receitas">R$ 0,00</p></div>
@@ -124,16 +125,20 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // COLE A SUA NOVA URL AQUI
     const apiUrl = 'https://script.google.com/macros/s/AKfycbwzpUmPzxE-T4-Q6LJKM9LXnLKFALTdlel3CLt_Q3IY3uTXo5v5_iUl9Iu-Q1srFSS6/exec';
     
+    // --- LISTAS DE OPÇÕES PARA OS FORMULÁRIOS ---
     const locais = ["Panevie", "Buono Trigo Industria", "Casa"];
     const fontesReceita = ["Cartão Panevie", "Cartão Industria", "Cartão Buono Trigo", "Madrugada", "Outra"];
     const fontesDespesa = ["Água","Aluguel","Arrendamento padaria","Amora","Casa Garcia","Combustível Fiorino","Combustível Jumper","Comercial Mab","Confraternização","Contadora","DAS","Despesas Cartão","Doações Instituições","Diarista Lucélia","Energia","FGTS","Financiamento Solar","Forn Água","Forn Armazem","Forn ASSAI","FORN BEIJU","FORN BETANIA","FORN BOLACHA FOL","FORN BOMBONIERE","FORN BUNGE","FORN CASTANHA","FORN CACHOEIRA","FORN COCO","FORN EMBALAGENS","FORN ELMA CHIPS","FORN ESTRELA (FARINHA)","FORN FARMÁCIA","FORN FORPAN","FORN FRIGORIFICO","FORN FRIOS INDUSTRIA","FORN FRIOS PANEVIE","FORN GÁS","FORN ISIS","FORN JANDAIA","FORN LINDENBERG","FORN M. DIAS BRANCO","FORN MERC ADRIEL","FORN MILFRIOS","FORN DE OVOS","FORN OMEGA","FORN PADEIRÃO","FORN PAMONHA","FORN PÃO DE QUEIJO","FORN PEPSICO","FORN PRODUTOS DE LIMPEZA","FORN REFRI","FORN ROYAL","FORN SOLMAR","FORN SR RICARDO","FORN TEMP BOLOS","FORN TAPIOCA LEONARDO","FORN TAPIOCA ZEZO","INSS","INTERNET","PARCELAMENTO RECEITA FEDERAL","DESPESAS MOTO","PONTO DAS REFRIGERAÇÕES","MANUTENÇÃO FIORINO","MANUTENÇÃO PADARIA","PRESTAÇÃO FURGÃO","RP CONSULTORIA","SALÁRIO MICHELE","SALÁRIO ANGELA","SALÁRIO JULIANA","SALÁRIO RAIMUNDO","SALÁRIO CARLOS","SALÁRIO GABRIEL","SALÁRIO LUCIO","SALÁRIO LUCIENE","SALÁRIO ALINE","SALÁRIO ZÉ","SEGURO BRADESCO","SEGURO PREDIAL","SINDPAN","SISTEMA","TAXA BANCÁRIA","SIMPLES NACIONAL","DIARISTA","EMBALAGEM PAPAI","ENERGIA SOLAR","FORN. QUEIJO","MAQUINÁRIO CETRO","MAQUINÁRIO ITAIYMAC","MAQUILAR","SALÁRIO LUANA","SALÁRIO PAULO","SALÁRIO D. BRANCA","TIM","MARFRIOS","SALÁRIO SOCORRO","ESPORTE JÚLIA","CAGECE","CARTÃO EXTRA","CARTÃO BRADESCO","CARTÃO ITAÚ","COLÉGIO JULIA","CONSÓRCIO","ECC PARACURU","FIES LUCIO","FIES MARINA","IGREJA","JANETE","LAZER FAMÍLIA","LUZ","MANUTENÇÃO CARRO","REFORÇO JÚLIA","MERCANTIL","PLANO DE SAÚDE","PRESTAÇÃO CASA","COMBUSTIVEL","CARRO","TELEFONE","TV A CABO","CASA CCF","Outra"];
     
+    // --- VARIÁVEIS GLOBAIS ---
     let transacoesGeral = [];
     let graficoLinhas = null;
     let graficoCategorias = null;
 
+    // --- ELEMENTOS DO DOM ---
     const loadingDiv = document.getElementById('loading');
     const dashboardContentDiv = document.getElementById('dashboard-content');
     const totalReceitasEl = document.getElementById('total-receitas');
@@ -159,6 +164,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnSalvarRegistro = document.getElementById('btn-salvar-registro');
     const corpoTabelaPlanejador = document.getElementById('corpo-tabela-planejador');
 
+    // --- FUNÇÕES UTILITÁRIAS ---
     const formatarMoeda = (valor) => (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     const formatarData = (data) => data instanceof Date && !isNaN(data) ? data.toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Data inválida';
     
@@ -172,6 +178,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
+    // --- LÓGICA DE DADOS ---
     async function carregarDadosIniciais() {
         loadingDiv.style.display = 'block';
         dashboardContentDiv.style.display = 'none';
@@ -215,6 +222,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // --- LÓGICA DE RENDERIZAÇÃO E ATUALIZAÇÃO ---
     function aplicarFiltros() {
         const tipoFiltro = document.querySelector('#filtro-tipo .active').dataset.tipo;
         const periodoFiltro = document.querySelector('#filtro-periodo .active').dataset.periodo;
@@ -325,11 +333,7 @@ document.addEventListener('DOMContentLoaded', function() {
     cardDespesas.addEventListener('click', () => exibirDetalhesModal('Despesa'));
     cardSaldo.addEventListener('click', () => exibirDetalhesModal('Saldo'));
     btnFecharDetalhes.addEventListener('click', () => modalDetalhes.style.display = 'none');
-    btnAbrirModalReceita.addEventListener('click', () => abrirModalRegistro('Receita'));
-    btnAbrirModalDespesa.addEventListener('click', () => abrirModalRegistro('Despesa'));
-    btnFecharRegistro.addEventListener('click', () => modalRegistro.style.display = 'none');
-    btnCancelarRegistro.addEventListener('click', () => modalRegistro.style.display = 'none');
-    
+
     document.body.addEventListener('click', function(e) {
         if (e.target.closest('.btn-marcar-pago')) {
             const btn = e.target.closest('.btn-marcar-pago');
@@ -362,7 +366,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Tema escuro
     function aplicarTema(tema) {
         document.body.classList.toggle('dark-mode', tema === 'dark');
         btnToggleTheme.innerHTML = tema === 'dark' ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
