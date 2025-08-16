@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const popularSelect = (selectEl, lista) => {
         selectEl.innerHTML = '';
-        lista.sort().forEach(item => { // .sort() para ordenar alfabeticamente
+        lista.sort().forEach(item => {
             const option = document.createElement('option');
             option.value = item;
             option.textContent = item;
@@ -280,7 +280,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function criarGraficoLinhas(transacoes) {
         const ctx = document.getElementById('grafico-linhas').getContext('2d');
         if (graficoLinhas) graficoLinhas.destroy();
-        if (transacoes.length === 0) return;
+        if (transacoes.length === 0) { graficoLinhas = null; return; }
 
         const periodoFiltro = document.querySelector('#filtro-periodo .active').dataset.periodo;
         let unit;
@@ -308,7 +308,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const ctx = document.getElementById('grafico-categorias').getContext('2d');
         if (graficoCategorias) graficoCategorias.destroy();
         const despesas = transacoes.filter(t => t.Tipo === 'Despesa');
-        if (despesas.length === 0) return;
+        if (despesas.length === 0) { graficoCategorias = null; return; }
         
         const dadosAgrupados = despesas.reduce((acc, t) => {
             const fonte = t.Fonte || 'Não especificado';
@@ -329,7 +329,6 @@ document.addEventListener('DOMContentLoaded', function() {
         planejadorItens.forEach(item => {
             const tr = document.createElement('tr');
             tr.className = `status-${item.Status}`;
-            // Encontra o índice do item no array original para garantir consistência
             const originalIndex = transacoesGeral.findIndex(t => t === item);
             tr.innerHTML = `<td>${formatarData(item.Data)}</td><td>${item.Fonte}</td><td>${formatarMoeda(item.Valor)}</td><td><button class="btn-icon btn-marcar-pago" data-index="${originalIndex}" title="Marcar como Pago">✔️</button></td>`;
             corpoTabelaPlanejador.appendChild(tr);
@@ -356,11 +355,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await response.json();
             if (result.status !== 'success') throw new Error(result.message);
             alert('Transação registrada com sucesso!');
-            modalRegistro.style.display = 'none';
+            if (modalRegistro.style.display !== 'none') modalRegistro.style.display = 'none';
             setTimeout(() => carregarDadosIniciais(), 1500);
         } catch (error) {
             alert('Erro ao registrar: ' + error.message);
-            if (itemOriginal) { itemOriginal.Status = 'Pendente'; renderizarPlanejador(); } // Reverte se der erro
+            if (itemOriginal) { itemOriginal.Status = 'Pendente'; renderizarPlanejador(); }
         } finally {
              if (btnText && btnSpinner) { btnSalvarRegistro.disabled = false; btnText.textContent = 'Salvar'; btnSpinner.style.display = 'none'; }
         }
@@ -369,12 +368,15 @@ document.addEventListener('DOMContentLoaded', function() {
     formRegistro.addEventListener('submit', (e) => {
         e.preventDefault();
         const valorInput = document.getElementById('reg-valor').value.replace(/\./g, '').replace(',', '.');
+        if (isNaN(parseFloat(valorInput))) {
+            alert('Por favor, insira um valor numérico válido.');
+            return;
+        }
         const status = document.getElementById('reg-tipo').value === 'Despesa' ? document.getElementById('reg-status').value : 'Pago';
         const dadosParaEnviar = { data: document.getElementById('reg-data').value, tipo: document.getElementById('reg-tipo').value, valor: parseFloat(valorInput), fonte: document.getElementById('reg-fonte').value, local: document.getElementById('reg-local').value, descricao: '', status: status };
         
-        // Se for pendente, salva apenas localmente por enquanto
         if (status === 'Pendente') {
-            dadosParaEnviar.Data = new Date(dadosParaEnviar.data + 'T00:00:00Z');
+            dadosParaEnviar.Data = new Date(dadosParaEnviar.data + 'T12:00:00Z'); // Adiciona timezone para consistência
             transacoesGeral.push(dadosParaEnviar);
             renderizarPlanejador();
             aplicarFiltros();
@@ -388,16 +390,14 @@ document.addEventListener('DOMContentLoaded', function() {
     formRegistro.addEventListener('submitpago', (e) => {
         const item = e.detail;
         item.Status = 'Pago';
-        // Prepara o objeto para ser enviado, garantindo que a data esteja no formato YYYY-MM-DD
         const dadosFinais = { ...item, data: dateFns.format(item.Data, 'yyyy-MM-dd') };
-        delete dadosFinais.Data; // Remove o objeto Date antes de enviar
+        delete dadosFinais.Data;
         submeterDados(dadosFinais, item);
     });
 
     const formatarMoeda = (valor) => (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     const formatarData = (data) => data instanceof Date && !isNaN(data) ? data.toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Data inválida';
     
-    // Tema escuro (opcional, pode remover se não quiser)
     const btnToggleTheme = document.getElementById('btn-toggle-theme');
     function aplicarTema(tema) {
         document.body.classList.toggle('dark-mode', tema === 'dark');
