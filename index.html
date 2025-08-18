@@ -125,10 +125,10 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // COLE A SUA NOVA URL AQUI
+    // COLE A SUA URL DO WEB APP AQUI (a URL do script do Google Apps Script implantado como Web App)
     const apiUrl = 'https://script.google.com/macros/s/AKfycbwzpUmPzxE-T4-Q6LJKM9LXnLKFALTdlel3CLt_Q3IY3uTXo5v5_iUl9Iu-Q1srFSS6/exec';
     
-    // --- LISTAS DE OPÇÕES PARA OS FORMULÁRIOS ---
+    // --- LISTAS DE OPÇÕES PARA OS FORMULÁRIOS (mantidas conforme o original) ---
     const locais = ["Panevie", "Buono Trigo Industria", "Casa"];
     const fontesReceita = ["Cartão Panevie", "Cartão Industria", "Cartão Buono Trigo", "Madrugada", "Outra"];
     const fontesDespesa = ["Água","Aluguel","Arrendamento padaria","Amora","Casa Garcia","Combustível Fiorino","Combustível Jumper","Comercial Mab","Confraternização","Contadora","DAS","Despesas Cartão","Doações Instituições","Diarista Lucélia","Energia","FGTS","Financiamento Solar","Forn Água","Forn Armazem","Forn ASSAI","FORN BEIJU","FORN BETANIA","FORN BOLACHA FOL","FORN BOMBONIERE","FORN BUNGE","FORN CASTANHA","FORN CACHOEIRA","FORN COCO","FORN EMBALAGENS","FORN ELMA CHIPS","FORN ESTRELA (FARINHA)","FORN FARMÁCIA","FORN FORPAN","FORN FRIGORIFICO","FORN FRIOS INDUSTRIA","FORN FRIOS PANEVIE","FORN GÁS","FORN ISIS","FORN JANDAIA","FORN LINDENBERG","FORN M. DIAS BRANCO","FORN MERC ADRIEL","FORN MILFRIOS","FORN DE OVOS","FORN OMEGA","FORN PADEIRÃO","FORN PAMONHA","FORN PÃO DE QUEIJO","FORN PEPSICO","FORN PRODUTOS DE LIMPEZA","FORN REFRI","FORN ROYAL","FORN SOLMAR","FORN SR RICARDO","FORN TEMP BOLOS","FORN TAPIOCA LEONARDO","FORN TAPIOCA ZEZO","INSS","INTERNET","PARCELAMENTO RECEITA FEDERAL","DESPESAS MOTO","PONTO DAS REFRIGERAÇÕES","MANUTENÇÃO FIORINO","MANUTENÇÃO PADARIA","PRESTAÇÃO FURGÃO","RP CONSULTORIA","SALÁRIO MICHELE","SALÁRIO ANGELA","SALÁRIO JULIANA","SALÁRIO RAIMUNDO","SALÁRIO CARLOS","SALÁRIO GABRIEL","SALÁRIO LUCIO","SALÁRIO LUCIENE","SALÁRIO ALINE","SALÁRIO ZÉ","SEGURO BRADESCO","SEGURO PREDIAL","SINDPAN","SISTEMA","TAXA BANCÁRIA","SIMPLES NACIONAL","DIARISTA","EMBALAGEM PAPAI","ENERGIA SOLAR","FORN. QUEIJO","MAQUINÁRIO CETRO","MAQUINÁRIO ITAIYMAC","MAQUILAR","SALÁRIO LUANA","SALÁRIO PAULO","SALÁRIO D. BRANCA","TIM","MARFRIOS","SALÁRIO SOCORRO","ESPORTE JÚLIA","CAGECE","CARTÃO EXTRA","CARTÃO BRADESCO","CARTÃO ITAÚ","COLÉGIO JULIA","CONSÓRCIO","ECC PARACURU","FIES LUCIO","FIES MARINA","IGREJA","JANETE","LAZER FAMÍLIA","LUZ","MANUTENÇÃO CARRO","REFORÇO JÚLIA","MERCANTIL","PLANO DE SAÚDE","PRESTAÇÃO CASA","COMBUSTIVEL","CARRO","TELEFONE","TV A CABO","CASA CCF","Outra"];
@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    async function submeterDados(dados, itemOriginal = null) {
+    async function submeterDados(dados) {
         const btnText = btnSalvarRegistro.querySelector('.btn-text');
         const btnSpinner = btnSalvarRegistro.querySelector('.fa-spinner');
         if (btnText && btnSpinner) { btnText.textContent = 'Salvando...'; btnSpinner.style.display = 'inline-block'; btnSalvarRegistro.disabled = true; }
@@ -216,7 +216,6 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => carregarDadosIniciais(), 1500);
         } catch (error) {
             alert('Erro ao registrar: ' + error.message);
-            if (itemOriginal) { itemOriginal.Status = 'Pendente'; renderizarPlanejador(); }
         } finally {
              if (btnText && btnSpinner) { btnSalvarRegistro.disabled = false; btnText.textContent = 'Salvar'; btnSpinner.style.display = 'none'; }
         }
@@ -327,12 +326,32 @@ document.addEventListener('DOMContentLoaded', function() {
         graficoCategorias = new Chart(ctx, { type: 'bar', data: { labels: top10.map(([fonte]) => fonte), datasets: [{ label: `Valor Total`, data: top10.map(([,valor]) => valor), backgroundColor: 'rgba(239, 68, 68, 0.7)' }] }, options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { callback: value => formatarMoeda(value) } } } } });
     }
 
+    function abrirModalRegistro(tipo) {
+        modalRegistroTitulo.textContent = `Registrar ${tipo}`;
+        document.getElementById('reg-tipo').value = tipo;
+        document.getElementById('reg-data').value = new Date().toISOString().split('T')[0];
+        popularSelect(document.getElementById('reg-local'), locais);
+        const fontes = tipo === 'Receita' ? fontesReceita : fontesDespesa;
+        popularSelect(document.getElementById('reg-fonte'), fontes);
+        document.getElementById('reg-valor').value = '';
+        const grupoStatus = document.getElementById('grupo-status');
+        grupoStatus.style.display = tipo === 'Despesa' ? 'block' : 'none';
+        if (tipo === 'Receita') {
+            document.getElementById('reg-status').value = 'Pago';
+        }
+        modalRegistro.style.display = 'flex';
+    }
+
     // --- EVENT LISTENERS ---
     btnRefresh.addEventListener('click', carregarDadosIniciais);
     cardReceitas.addEventListener('click', () => exibirDetalhesModal('Receita'));
     cardDespesas.addEventListener('click', () => exibirDetalhesModal('Despesa'));
     cardSaldo.addEventListener('click', () => exibirDetalhesModal('Saldo'));
     btnFecharDetalhes.addEventListener('click', () => modalDetalhes.style.display = 'none');
+    btnAbrirModalReceita.addEventListener('click', () => abrirModalRegistro('Receita'));
+    btnAbrirModalDespesa.addEventListener('click', () => abrirModalRegistro('Despesa'));
+    btnFecharRegistro.addEventListener('click', () => modalRegistro.style.display = 'none');
+    btnCancelarRegistro.addEventListener('click', () => modalRegistro.style.display = 'none');
 
     document.body.addEventListener('click', function(e) {
         if (e.target.closest('.btn-marcar-pago')) {
@@ -340,10 +359,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const index = btn.dataset.index;
             const itemParaPagar = transacoesGeral[index];
             if (confirm(`Deseja marcar a despesa "${itemParaPagar.Fonte}" de ${formatarMoeda(itemParaPagar.Valor)} como paga?`)) {
-                itemParaPagar.Status = 'Pago';
-                const dadosFinais = { ...itemParaPagar, data: dateFns.format(itemParaPagar.Data, 'yyyy-MM-dd') };
-                delete dadosFinais.Data;
-                submeterDados(dadosFinais, itemParaPagar);
+                const dadosUpdate = { row: itemParaPagar.rowIndex, status: 'Pago' };
+                submeterDados(dadosUpdate);
             }
         }
     });
@@ -354,16 +371,25 @@ document.addEventListener('DOMContentLoaded', function() {
         if (isNaN(parseFloat(valorInput))) { alert('Por favor, insira um valor numérico válido.'); return; }
         const status = document.getElementById('reg-tipo').value === 'Despesa' ? document.getElementById('reg-status').value : 'Pago';
         const dadosParaEnviar = { data: document.getElementById('reg-data').value, tipo: document.getElementById('reg-tipo').value, valor: parseFloat(valorInput), fonte: document.getElementById('reg-fonte').value, local: document.getElementById('reg-local').value, descricao: '', status: status };
-        if (status === 'Pendente') {
-            dadosParaEnviar.Data = new Date(dadosParaEnviar.data + 'T12:00:00Z');
-            transacoesGeral.push(dadosParaEnviar);
-            renderizarPlanejador();
+        submeterDados(dadosParaEnviar);
+    });
+
+    const filtroTipoBtns = document.querySelectorAll('#filtro-tipo .btn-filtro');
+    filtroTipoBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filtroTipoBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
             aplicarFiltros();
-            modalRegistro.style.display = 'none';
-            alert('Conta pendente adicionada ao planejador!');
-        } else {
-            submeterDados(dadosParaEnviar);
-        }
+        });
+    });
+
+    const filtroPeriodoBtns = document.querySelectorAll('#filtro-periodo .btn-filtro');
+    filtroPeriodoBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filtroPeriodoBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            aplicarFiltros();
+        });
     });
 
     function aplicarTema(tema) {
