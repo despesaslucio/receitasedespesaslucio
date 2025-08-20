@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Financeiro com Backup</title>
+    <title>Dashboard Financeiro PRO</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
@@ -79,6 +79,7 @@
                 </div>
             </div>
         </header>
+
         <main>
             <section class="cards-resumo">
                 <div class="card receitas clicavel" id="card-receitas"><div class="card-header"><span>Receitas</span><i class="fa-solid fa-circle-arrow-up"></i></div><p class="valor" id="total-receitas">R$ 0,00</p></div>
@@ -91,6 +92,8 @@
                  <div class="grupo-filtro" id="filtro-periodo"><button class="btn-filtro" data-periodo="Diario">Hoje</button><button class="btn-filtro" data-periodo="Semanal">Semana</button><button class="btn-filtro active" data-periodo="Mensal">Mês</button><button class="btn-filtro" data-periodo="Anual">Ano</button></div>
             </section>
             
+            <div id="loading" style="text-align: center; padding: 50px; font-size: 1.5em; color: var(--cor-texto-leve); display: none;"><p><i class="fa-solid fa-spinner fa-spin"></i> Carregando dados...</p></div>
+
             <div id="dashboard-content">
                 <section class="grid-principal">
                     <div class="widget"> <h2 id="titulo-grafico">Evolução Financeira</h2> <canvas id="grafico-linhas"></canvas> </div>
@@ -237,7 +240,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const periodoFiltro = document.querySelector('#filtro-periodo .active').dataset.periodo;
         const hoje = new Date();
         const transacoesAtuaisFiltradas = transacoesGeral.filter(t => {
-            if (!t || !t.Data) return false;
+            if (!t || !t.Data || !(t.Data instanceof Date)) return false;
             if (tipoFiltro !== 'Todos' && t.Tipo !== tipoFiltro) return false;
             switch(periodoFiltro) {
                 case 'Diario': return dateFns.isSameDay(t.Data, hoje);
@@ -304,8 +307,46 @@ document.addEventListener('DOMContentLoaded', function() {
         modalDetalhes.style.display = 'flex';
     }
     
-    function criarGraficoLinhas(transacoes) { /* ...código do gráfico... */ }
-    function criarGraficoCategorias(transacoes) { /* ...código do gráfico... */ }
+    function criarGraficoLinhas(transacoes) {
+        const ctx = document.getElementById('grafico-linhas').getContext('2d');
+        if (graficoLinhas) graficoLinhas.destroy();
+        if (transacoes.length === 0) { graficoLinhas = null; return; }
+        const periodoFiltro = document.querySelector('#filtro-periodo .active').dataset.periodo;
+        let unit;
+        switch(periodoFiltro) { case 'Diario': unit = 'hour'; break; case 'Semanal': case 'Mensal': unit = 'day'; break; case 'Anual': unit = 'month'; break; }
+        const dadosAgrupados = transacoes.reduce((acc, t) => {
+            const d = t.Data;
+            if (!d || isNaN(d.getTime())) return acc;
+            let chaveObj;
+            if (unit === 'hour') chaveObj = new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours());
+            else if (unit === 'day') chaveObj = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            else if (unit === 'month') chaveObj = new Date(d.getFullYear(), d.getMonth(), 1);
+            else chaveObj = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            const chave = chaveObj.toISOString();
+            if (!acc[chave]) acc[chave] = { receitas: 0, despesas: 0 };
+            if (t.Tipo === 'Receita') acc[chave].receitas += (t.Valor || 0);
+            else if (t.Tipo === 'Despesa') acc[chave].despesas += (t.Valor || 0);
+            return acc;
+        }, {});
+        const labels = Object.keys(dadosAgrupados).sort((a,b) => new Date(a) - new Date(b));
+        graficoLinhas = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: 'Receitas', data: labels.map(key => dadosAgrupados[key].receitas), borderColor: 'var(--cor-verde)', backgroundColor: 'rgba(16, 185, 129, 0.2)', fill: true, tension: 0.3 }, { label: 'Despesas', data: labels.map(key => dadosAgrupados[key].despesas), borderColor: 'var(--cor-vermelho)', backgroundColor: 'rgba(239, 68, 68, 0.2)', fill: true, tension: 0.3 }] }, options: { responsive: true, scales: { x: { type: 'time', time: { unit: unit, tooltipFormat: 'dd/MM/yyyy' } }, y: { beginAtZero: true, ticks: { callback: value => formatarMoeda(value) } } } } });
+    }
+    
+    function criarGraficoCategorias(transacoes) {
+        const ctx = document.getElementById('grafico-categorias').getContext('2d');
+        if (graficoCategorias) graficoCategorias.destroy();
+        const despesas = transacoes.filter(t => t.Tipo === 'Despesa');
+        if (despesas.length === 0) { graficoCategorias = null; return; }
+        const dadosAgrupados = despesas.reduce((acc, t) => {
+            const fonte = t.Fonte || 'Não especificado';
+            if (!acc[fonte]) acc[fonte] = 0;
+            acc[fonte] += (t.Valor || 0);
+            return acc;
+        }, {});
+        const top10 = Object.entries(dadosAgrupados).sort(([,a],[,b]) => b - a).slice(0, 10);
+        document.getElementById('titulo-categorias').textContent = 'Top 10 Despesas por Fonte';
+        graficoCategorias = new Chart(ctx, { type: 'bar', data: { labels: top10.map(([fonte]) => fonte), datasets: [{ label: `Valor Total`, data: top10.map(([,valor]) => valor), backgroundColor: 'rgba(239, 68, 68, 0.7)' }] }, options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { callback: value => formatarMoeda(value) } } } } });
+    }
 
     function abrirModalRegistro(tipo) {
         formRegistro.reset();
@@ -338,6 +379,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('planejador-valor').value = String(item.Valor).replace('.', ',');
         } else {
             modalPlanejadorTitulo.textContent = "Adicionar Conta a Pagar";
+            document.getElementById('planejador-id').value = '';
             document.getElementById('planejador-data').valueAsDate = new Date();
         }
         modalPlanejador.style.display = 'flex';
@@ -374,11 +416,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const itemParaPagar = planejadorGeral[index];
             if (itemParaPagar && confirm(`Deseja marcar a despesa "${itemParaPagar.Fonte}" de ${formatarMoeda(itemParaPagar.Valor)} como paga?`)) {
                 planejadorGeral.splice(index, 1);
-                transacoesGeral.push({
-                    id: itemParaPagar.id, Data: itemParaPagar.Data, Tipo: 'Despesa',
-                    Fonte: itemParaPagar.Fonte, Local: itemParaPagar.Local || 'Não especificado',
-                    Valor: itemParaPagar.Valor, Status: 'Pago', Descricao: ''
-                });
+                transacoesGeral.push({ ...itemParaPagar, Status: 'Pago' });
                 atualizarAplicacao();
             }
         } else if (target.classList.contains('btn-editar-planejado')) {
@@ -422,12 +460,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const valorInput = document.getElementById('planejador-valor').value.replace(/\./g, '').replace(',', '.');
         if (isNaN(parseFloat(valorInput))) { alert('Por favor, insira um valor numérico válido.'); return; }
         const id = parseInt(document.getElementById('planejador-id').value, 10);
-        if (id) {
+        if (id) { // Editando
             const item = planejadorGeral.find(p => p.id === id);
             item.Data = new Date(document.getElementById('planejador-data').value + 'T12:00:00Z');
             item.Fonte = document.getElementById('planejador-fonte').value;
             item.Valor = parseFloat(valorInput);
-        } else {
+        } else { // Novo
             planejadorGeral.push({
                 id: Date.now(),
                 Data: new Date(document.getElementById('planejador-data').value + 'T12:00:00Z'),
@@ -439,8 +477,15 @@ document.addEventListener('DOMContentLoaded', function() {
         modalPlanejador.style.display = 'none';
     });
 
-    function aplicarTema(tema) { /* ...código do tema... */ }
-    btnToggleTheme.addEventListener('click', () => { /* ...código do tema... */ });
+    function aplicarTema(tema) {
+        document.body.classList.toggle('dark-mode', tema === 'dark');
+        btnToggleTheme.innerHTML = tema === 'dark' ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
+    }
+    btnToggleTheme.addEventListener('click', () => {
+        const temaAtual = document.body.classList.contains('dark-mode') ? 'light' : 'dark';
+        localStorage.setItem('temaDashboard', temaAtual);
+        aplicarTema(temaAtual);
+    });
 
     function exportarParaPDF(tipo) {
         const { jsPDF } = window.jspdf;
@@ -461,7 +506,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const transacaoData = [ formatarData(item.Data), item.Fonte, item.Local || '-', formatarMoeda(item.Valor) ];
             tableRows.push(transacaoData);
         });
-        doc.autoTable({ head: [tableColumn], body: tableRows, startY: 50, theme: 'striped', headStyles: { fillColor: tipo === 'Receita' ? [22, 163, 74] : [220, 38, 38] } });
+        doc.autoTable({ head: [tableColumn], body: tableRows, startY: 60, theme: 'striped', headStyles: { fillColor: tipo === 'Receita' ? [22, 163, 74] : [220, 38, 38] } });
         doc.save(`relatorio_${tipo.toLowerCase()}s.pdf`);
     }
     btnExportReceitas.addEventListener('click', () => exportarParaPDF('Receita'));
