@@ -71,6 +71,7 @@
                 <h1>Dashboard Financeiro</h1>
                 <button class="btn-icon" id="btn-export-receitas" title="Exportar Relatório de Receitas"><i class="fa-solid fa-file-pdf"></i></button>
                 <button class="btn-icon" id="btn-export-despesas" title="Exportar Relatório de Despesas"><i class="fa-solid fa-file-invoice-dollar"></i></button>
+                <button class="btn-icon" id="btn-refresh" title="Recarregar Dados"><i class="fa-solid fa-sync-alt"></i></button>
             </div>
             <div class="header-actions">
                 <button class="btn-icon" id="btn-toggle-theme" title="Mudar tema"><i class="fa-solid fa-moon"></i></button>
@@ -277,10 +278,11 @@ document.addEventListener('DOMContentLoaded', function() {
         let transacoesParaExibir = [];
         if (tipo === 'Receita' || tipo === 'Despesa') {
             modalDetalhesTitulo.textContent = `Detalhes de ${tipo}s`;
-            transacoesParaExibir = transacoesVisiveis.filter(t => t.Tipo === tipo);
-        } else {
-             modalDetalhesTitulo.textContent = `Detalhes do Período`;
-             transacoesParaExibir = transacoesVisiveis;
+            transacoesParaExibir = transacoesVisiveisquantity: 1
+unit_price: 150.50
+description: "Registro de teste para despesa pendente"
+            modalDetalhesTitulo.textContent = `Detalhes do Período`;
+            transacoesParaExibir = transacoesVisiveis;
         }
         transacoesParaExibir.sort((a,b) => b.Data - a.Data);
         let html = '<p style="text-align:center; padding: 20px;">Nenhuma transação encontrada.</p>';
