@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Financeiro Definitivo</title>
+    <title>Dashboard Financeiro Local</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
@@ -84,9 +84,9 @@
                  <div class="grupo-filtro" id="filtro-periodo"><button class="btn-filtro" data-periodo="Diario">Hoje</button><button class="btn-filtro" data-periodo="Semanal">Semana</button><button class="btn-filtro active" data-periodo="Mensal">Mês</button><button class="btn-filtro" data-periodo="Anual">Ano</button></div>
             </section>
             
-            <div id="loading" style="text-align: center; padding: 50px; font-size: 1.5em; color: var(--cor-texto-leve);"><p><i class="fa-solid fa-spinner fa-spin"></i> Carregando dados...</p></div>
+            <div id="loading" style="text-align: center; padding: 50px; font-size: 1.5em; color: var(--cor-texto-leve); display: none;"><p><i class="fa-solid fa-spinner fa-spin"></i> Carregando dados...</p></div>
 
-            <div id="dashboard-content" style="display:none;">
+            <div id="dashboard-content">
                 <section class="grid-principal">
                     <div class="widget"> <h2 id="titulo-grafico">Evolução Financeira</h2> <canvas id="grafico-linhas"></canvas> </div>
                     <div class="widget"> <h2 id="titulo-categorias">Top 10 Despesas por Fonte</h2> <canvas id="grafico-categorias"></canvas> </div>
@@ -110,8 +110,8 @@
                 <form id="form-registro">
                     <input type="hidden" id="reg-tipo">
                     <div class="form-grupo"><label for="reg-data">Data da Transação</label><input type="date" id="reg-data" required></div>
-                    <div class="form-grupo"><label for="reg-local">Local</label><select id="reg-local" required></select></div>
-                    <div class="form-grupo"><label for="reg-fonte">Fonte</label><select id="reg-fonte" required></select></div>
+                    <div class="form-grupo"><label for="reg-local">Local</label><input type="text" id="reg-local" list="datalist-locais" required></div>
+                    <div class="form-grupo"><label for="reg-fonte">Fonte</label><input type="text" id="reg-fonte" list="datalist-fontes" required></div>
                     <div class="form-grupo"><label for="reg-valor">Valor (R$)</label><input type="text" inputmode="decimal" id="reg-valor" placeholder="150,50" required></div>
                     <div class="form-grupo" id="grupo-status"><label for="reg-status">Status</label><select id="reg-status"><option value="Pago">Já foi pago</option><option value="Pendente">Conta a pagar (pendente)</option></select></div>
                     <div class="form-botoes">
@@ -122,13 +122,15 @@
             </div>
         </div>
     </div>
+    
+    <datalist id="datalist-locais"></datalist>
+    <datalist id="datalist-fontes"></datalist>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // COLE A URL DO WEB APP COM O PROXY CORS-ANYWHERE
-    const apiUrl = 'https://cors-anywhere.herokuapp.com/https://script.google.com/macros/s/AKfycbwlVXt788tnLNkWqsx5H2c821bUGLmeXxnn0KO_ofDe8Ny1vivuctfrnAwSbATzEosY/exec';
-    
-    // --- LISTAS DE OPÇÕES PARA OS FORMULÁRIOS ---
+    'use strict';
+
+    // --- LISTAS DE OPÇÕES PARA SUGESTÕES ---
     const locais = ["Panevie", "Buono Trigo Industria", "Casa"];
     const fontesReceita = ["Cartão Panevie", "Cartão Industria", "Cartão Buono Trigo", "Madrugada", "Outra"];
     const fontesDespesa = ["Água","Aluguel","Arrendamento padaria","Amora","Casa Garcia","Combustível Fiorino","Combustível Jumper","Comercial Mab","Confraternização","Contadora","DAS","Despesas Cartão","Doações Instituições","Diarista Lucélia","Energia","FGTS","Financiamento Solar","Forn Água","Forn Armazem","Forn ASSAI","FORN BEIJU","FORN BETANIA","FORN BOLACHA FOL","FORN BOMBONIERE","FORN BUNGE","FORN CASTANHA","FORN CACHOEIRA","FORN COCO","FORN EMBALAGENS","FORN ELMA CHIPS","FORN ESTRELA (FARINHA)","FORN FARMÁCIA","FORN FORPAN","FORN FRIGORIFICO","FORN FRIOS INDUSTRIA","FORN FRIOS PANEVIE","FORN GÁS","FORN ISIS","FORN JANDAIA","FORN LINDENBERG","FORN M. DIAS BRANCO","FORN MERC ADRIEL","FORN MILFRIOS","FORN DE OVOS","FORN OMEGA","FORN PADEIRÃO","FORN PAMONHA","FORN PÃO DE QUEIJO","FORN PEPSICO","FORN PRODUTOS DE LIMPEZA","FORN REFRI","FORN ROYAL","FORN SOLMAR","FORN SR RICARDO","FORN TEMP BOLOS","FORN TAPIOCA LEONARDO","FORN TAPIOCA ZEZO","INSS","INTERNET","PARCELAMENTO RECEITA FEDERAL","DESPESAS MOTO","PONTO DAS REFRIGERAÇÕES","MANUTENÇÃO FIORINO","MANUTENÇÃO PADARIA","PRESTAÇÃO FURGÃO","RP CONSULTORIA","SALÁRIO MICHELE","SALÁRIO ANGELA","SALÁRIO JULIANA","SALÁRIO RAIMUNDO","SALÁRIO CARLOS","SALÁRIO GABRIEL","SALÁRIO LUCIO","SALÁRIO LUCIENE","SALÁRIO ALINE","SALÁRIO ZÉ","SEGURO BRADESCO","SEGURO PREDIAL","SINDPAN","SISTEMA","TAXA BANCÁRIA","SIMPLES NACIONAL","DIARISTA","EMBALAGEM PAPAI","ENERGIA SOLAR","FORN. QUEIJO","MAQUINÁRIO CETRO","MAQUINÁRIO ITAIYMAC","MAQUILAR","SALÁRIO LUANA","SALÁRIO PAULO","SALÁRIO D. BRANCA","TIM","MARFRIOS","SALÁRIO SOCORRO","ESPORTE JÚLIA","CAGECE","CARTÃO EXTRA","CARTÃO BRADESCO","CARTÃO ITAÚ","COLÉGIO JULIA","CONSÓRCIO","ECC PARACURU","FIES LUCIO","FIES MARINA","IGREJA","JANETE","LAZER FAMÍLIA","LUZ","MANUTENÇÃO CARRO","REFORÇO JÚLIA","MERCANTIL","PLANO DE SAÚDE","PRESTAÇÃO CASA","COMBUSTIVEL","CARRO","TELEFONE","TV A CABO","CASA CCF","Outra"];
@@ -163,81 +165,42 @@ document.addEventListener('DOMContentLoaded', function() {
     const formRegistro = document.getElementById('form-registro');
     const btnSalvarRegistro = document.getElementById('btn-salvar-registro');
     const corpoTabelaPlanejador = document.getElementById('corpo-tabela-planejador');
+    const datalistLocais = document.getElementById('datalist-locais');
+    const datalistFontes = document.getElementById('datalist-fontes');
 
     // --- FUNÇÕES UTILITÁRIAS ---
     const formatarMoeda = (valor) => (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     const formatarData = (data) => data instanceof Date && !isNaN(data) ? data.toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Data inválida';
     
-    const popularSelect = (selectEl, lista) => {
-        selectEl.innerHTML = '';
+    const popularDatalist = (datalistEl, lista) => {
+        datalistEl.innerHTML = '';
         lista.sort().forEach(item => {
             const option = document.createElement('option');
             option.value = item;
-            option.textContent = item;
-            selectEl.appendChild(option);
+            datalistEl.appendChild(option);
         });
     };
 
-    // --- LÓGICA DE DADOS ---
-    async function carregarDadosIniciais() {
-        loadingDiv.style.display = 'block';
-        dashboardContentDiv.style.display = 'none';
-        btnRefresh.firstElementChild.classList.add('fa-spin');
-        try {
-            const response = await fetch(apiUrl, { method: 'GET', mode: 'cors' });
-            if (!response.ok) throw new Error(`Erro na rede (Status: ${response.status}). Verifique se o proxy CORS está ativo ou se a API está acessível.`);
-            const result = await response.json();
-            if (result.status === 'error') throw new Error(result.message);
-            if (!Array.isArray(result)) throw new Error('A resposta da API não é uma lista válida.');
-            transacoesGeral = result.map(item => ({
-                ...item,
-                Data: new Date(item.Data),
-                Tipo: item.Tipo ? item.Tipo.replace(/[.;]$/, '').replace('Receitas', 'Receita').replace('Despesas', 'Despesa') : 'Desconhecido',
-                Status: item.Status ? item.Status.replace(/[.;]$/, '').replace('Recebido', 'Pago') : 'Desconhecido'
-            })).filter(t => t.Data instanceof Date && !isNaN(t.Data));
-            renderizarPlanejador();
-            aplicarFiltros();
-            loadingDiv.style.display = 'none';
-            dashboardContentDiv.style.display = 'block';
-        } catch (error) {
-            console.error('Erro ao buscar dados:', error);
-            loadingDiv.innerHTML = `<p style="color:var(--cor-vermelho);"><i class="fa-solid fa-circle-xmark"></i> Falha ao carregar: ${error.message}. Tente ativar o proxy CORS em https://cors-anywhere.herokuapp.com ou verifique a conexão com a API.</p>`;
-        } finally {
-            btnRefresh.firstElementChild.classList.remove('fa-spin');
+    // --- LÓGICA DE DADOS (LocalStorage) ---
+    function carregarDados() {
+        const dadosSalvos = localStorage.getItem('minhasFinancas');
+        if (dadosSalvos) {
+            transacoesGeral = JSON.parse(dadosSalvos).map(item => ({...item, Data: new Date(item.Data)}));
+        } else {
+            transacoesGeral = []; // Começa vazio se não houver nada salvo
         }
+        atualizarAplicacao();
     }
 
-    async function submeterDados(dados) {
-        const btnText = btnSalvarRegistro.querySelector('.btn-text');
-        const btnSpinner = btnSalvarRegistro.querySelector('.fa-spinner');
-        if (btnText && btnSpinner) { 
-            btnText.textContent = 'Salvando...'; 
-            btnSpinner.style.display = 'inline-block'; 
-            btnSalvarRegistro.disabled = true; 
-        }
-        try {
-            const response = await fetch(apiUrl, { 
-                method: 'POST', 
-                mode: 'cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dados) 
-            });
-            if (!response.ok) throw new Error(`Erro na rede ao salvar (Status: ${response.status}). Verifique se o proxy CORS está ativo.`);
-            const result = await response.json();
-            if (result.status !== 'success') throw new Error(result.message || 'Erro desconhecido ao salvar.');
-            alert('Transação registrada com sucesso!');
-            modalRegistro.style.display = 'none';
-            setTimeout(() => carregarDadosIniciais(), 1500);
-        } catch (error) {
-            console.error('Erro ao salvar transação:', error);
-            alert(`Erro ao registrar: ${error.message}. Tente ativar o proxy CORS em https://cors-anywhere.herokuapp.com.`);
-        } finally {
-            if (btnText && btnSpinner) { 
-                btnSalvarRegistro.disabled = false; 
-                btnText.textContent = 'Salvar'; 
-                btnSpinner.style.display = 'none'; 
-            }
-        }
+    function salvarDados() {
+        localStorage.setItem('minhasFinancas', JSON.stringify(transacoesGeral));
+    }
+    
+    // --- FUNÇÃO MESTRA DE ATUALIZAÇÃO ---
+    function atualizarAplicacao() {
+        salvarDados();
+        renderizarPlanejador();
+        aplicarFiltros(); // Isso já atualiza os cards e gráficos
     }
 
     // --- LÓGICA DE RENDERIZAÇÃO E ATUALIZAÇÃO ---
@@ -245,6 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const tipoFiltro = document.querySelector('#filtro-tipo .active').dataset.tipo;
         const periodoFiltro = document.querySelector('#filtro-periodo .active').dataset.periodo;
         const hoje = new Date();
+        
         const transacoesVisiveis = transacoesGeral.filter(t => t.Status !== 'Pendente');
         const transacoesAtuaisFiltradas = transacoesVisiveis.filter(t => {
             if (!t || !t.Data) return false;
@@ -257,7 +221,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 default: return true;
             }
         });
-        document.getElementById('titulo-grafico').textContent = `Evolução Financeira (${periodoFiltro})`;
+        tituloGraficoEl.textContent = `Evolução Financeira (${periodoFiltro})`;
         atualizarDashboard(transacoesAtuaisFiltradas);
     }
     
@@ -283,8 +247,8 @@ document.addEventListener('DOMContentLoaded', function() {
         planejadorItens.forEach(item => {
             const tr = document.createElement('tr');
             tr.className = `status-Pendente`;
-            const originalIndex = transacoesGeral.findIndex(t => t === item);
-            tr.innerHTML = `<td>${formatarData(item.Data)}</td><td>${item.Fonte || 'Não especificado'}</td><td>${formatarMoeda(item.Valor)}</td><td><button class="btn-icon btn-marcar-pago" data-index="${originalIndex}" title="Marcar como Pago">✔️</button></td>`;
+            const originalIndex = transacoesGeral.findIndex(t => t.id === item.id);
+            tr.innerHTML = `<td>${formatarData(item.Data)}</td><td>${item.Fonte}</td><td>${formatarMoeda(item.Valor)}</td><td><button class="btn-icon btn-marcar-pago" data-index="${originalIndex}" title="Marcar como Pago">✔️</button></td>`;
             corpoTabelaPlanejador.appendChild(tr);
         });
     }
@@ -296,8 +260,8 @@ document.addEventListener('DOMContentLoaded', function() {
             modalDetalhesTitulo.textContent = `Detalhes de ${tipo}s`;
             transacoesParaExibir = transacoesVisiveis.filter(t => t.Tipo === tipo);
         } else {
-            modalDetalhesTitulo.textContent = `Detalhes do Período`;
-            transacoesParaExibir = transacoesVisiveis;
+             modalDetalhesTitulo.textContent = `Detalhes do Período`;
+             transacoesParaExibir = transacoesVisiveis;
         }
         transacoesParaExibir.sort((a,b) => b.Data - a.Data);
         let html = '<p style="text-align:center; padding: 20px;">Nenhuma transação encontrada.</p>';
@@ -315,38 +279,23 @@ document.addEventListener('DOMContentLoaded', function() {
         if (transacoes.length === 0) { graficoLinhas = null; return; }
         const periodoFiltro = document.querySelector('#filtro-periodo .active').dataset.periodo;
         let unit;
-        switch(periodoFiltro) { 
-            case 'Diario': unit = 'hour'; break; 
-            case 'Semanal': case 'Mensal': unit = 'day'; break; 
-            case 'Anual': unit = 'month'; break; 
-        }
+        switch(periodoFiltro) { case 'Diario': unit = 'hour'; break; case 'Semanal': case 'Mensal': unit = 'day'; break; case 'Anual': unit = 'month'; break; }
         const dadosAgrupados = transacoes.reduce((acc, t) => {
             const d = t.Data;
             if (!d || isNaN(d.getTime())) return acc;
-            const chave = dateFns.startOf(d, unit).toISOString();
+            let chaveObj;
+            if (unit === 'hour') chaveObj = new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours());
+            else if (unit === 'day') chaveObj = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            else if (unit === 'month') chaveObj = new Date(d.getFullYear(), d.getMonth(), 1);
+            else chaveObj = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            const chave = chaveObj.toISOString();
             if (!acc[chave]) acc[chave] = { receitas: 0, despesas: 0 };
             if (t.Tipo === 'Receita') acc[chave].receitas += (t.Valor || 0);
             else if (t.Tipo === 'Despesa') acc[chave].despesas += (t.Valor || 0);
             return acc;
         }, {});
         const labels = Object.keys(dadosAgrupados).sort((a,b) => new Date(a) - new Date(b));
-        graficoLinhas = new Chart(ctx, { 
-            type: 'line', 
-            data: { 
-                labels: labels, 
-                datasets: [
-                    { label: 'Receitas', data: labels.map(key => dadosAgrupados[key].receitas), borderColor: 'var(--cor-verde)', backgroundColor: 'rgba(16, 185, 129, 0.2)', fill: true, tension: 0.3 },
-                    { label: 'Despesas', data: labels.map(key => dadosAgrupados[key].despesas), borderColor: 'var(--cor-vermelho)', backgroundColor: 'rgba(239, 68, 68, 0.2)', fill: true, tension: 0.3 }
-                ]
-            }, 
-            options: { 
-                responsive: true, 
-                scales: { 
-                    x: { type: 'time', time: { unit: unit, tooltipFormat: 'dd/MM/yyyy' } }, 
-                    y: { beginAtZero: true, ticks: { callback: value => formatarMoeda(value) } } 
-                } 
-            } 
-        });
+        graficoLinhas = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: 'Receitas', data: labels.map(key => dadosAgrupados[key].receitas), borderColor: 'var(--cor-verde)', backgroundColor: 'rgba(16, 185, 129, 0.2)', fill: true, tension: 0.3 }, { label: 'Despesas', data: labels.map(key => dadosAgrupados[key].despesas), borderColor: 'var(--cor-vermelho)', backgroundColor: 'rgba(239, 68, 68, 0.2)', fill: true, tension: 0.3 }] }, options: { responsive: true, scales: { x: { type: 'time', time: { unit: unit, tooltipFormat: 'dd/MM/yyyy' } }, y: { beginAtZero: true, ticks: { callback: value => formatarMoeda(value) } } } } });
     }
     
     function criarGraficoCategorias(transacoes) {
@@ -362,56 +311,60 @@ document.addEventListener('DOMContentLoaded', function() {
         }, {});
         const top10 = Object.entries(dadosAgrupados).sort(([,a],[,b]) => b - a).slice(0, 10);
         document.getElementById('titulo-categorias').textContent = 'Top 10 Despesas por Fonte';
-        graficoCategorias = new Chart(ctx, { 
-            type: 'bar', 
-            data: { 
-                labels: top10.map(([fonte]) => fonte), 
-                datasets: [{ label: 'Valor Total', data: top10.map(([,valor]) => valor), backgroundColor: 'rgba(239, 68, 68, 0.7)' }] 
-            }, 
-            options: { 
-                indexAxis: 'y', 
-                responsive: true, 
-                plugins: { legend: { display: false } }, 
-                scales: { x: { ticks: { callback: value => formatarMoeda(value) } } } 
-            } 
-        });
+        graficoCategorias = new Chart(ctx, { type: 'bar', data: { labels: top10.map(([fonte]) => fonte), datasets: [{ label: `Valor Total`, data: top10.map(([,valor]) => valor), backgroundColor: 'rgba(239, 68, 68, 0.7)' }] }, options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { callback: value => formatarMoeda(value) } } } } });
     }
 
-    function abrirModalRegistro(tipo) {
-        modalRegistroTitulo.textContent = `Registrar ${tipo}`;
+    // --- LÓGICA DE EVENTOS E INTERAÇÃO ---
+    const abrirModalRegistro = (tipo) => {
+        formRegistro.reset();
+        document.getElementById('reg-data').valueAsDate = new Date();
         document.getElementById('reg-tipo').value = tipo;
-        document.getElementById('reg-data').value = new Date().toISOString().split('T')[0];
-        popularSelect(document.getElementById('reg-local'), locais);
-        const fontes = tipo === 'Receita' ? fontesReceita : fontesDespesa;
-        popularSelect(document.getElementById('reg-fonte'), fontes);
-        document.getElementById('reg-valor').value = '';
+        
+        popularDatalist(datalistLocais, locais);
         const grupoStatus = document.getElementById('grupo-status');
-        grupoStatus.style.display = tipo === 'Despesa' ? 'block' : 'none';
+
         if (tipo === 'Receita') {
-            document.getElementById('reg-status').value = 'Pago';
+            modalRegistroTitulo.textContent = 'Registrar Nova Receita';
+            popularDatalist(datalistFontes, fontesReceita);
+            grupoStatus.style.display = 'none';
+            btnSalvarRegistro.className = 'btn btn-verde';
+        } else {
+            modalRegistroTitulo.textContent = 'Registrar Nova Despesa';
+            popularDatalist(datalistFontes, fontesDespesa);
+            grupoStatus.style.display = 'flex';
+            btnSalvarRegistro.className = 'btn btn-vermelho';
         }
         modalRegistro.style.display = 'flex';
-    }
+    };
 
-    // --- EVENT LISTENERS ---
-    btnRefresh.addEventListener('click', carregarDadosIniciais);
-    cardReceitas.addEventListener('click', () => exibirDetalhesModal('Receita'));
-    cardDespesas.addEventListener('click', () => exibirDetalhesModal('Despesa'));
-    cardSaldo.addEventListener('click', () => exibirDetalhesModal('Saldo'));
-    btnFecharDetalhes.addEventListener('click', () => modalDetalhes.style.display = 'none');
     btnAbrirModalReceita.addEventListener('click', () => abrirModalRegistro('Receita'));
     btnAbrirModalDespesa.addEventListener('click', () => abrirModalRegistro('Despesa'));
     btnFecharRegistro.addEventListener('click', () => modalRegistro.style.display = 'none');
     btnCancelarRegistro.addEventListener('click', () => modalRegistro.style.display = 'none');
+    btnRefresh.addEventListener('click', () => location.reload()); // Recarrega a página
 
+    document.querySelectorAll('.btn-filtro').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.target.closest('.grupo-filtro').querySelector('.active').classList.remove('active');
+            e.target.classList.add('active');
+            aplicarFiltros();
+        });
+    });
+
+    cardReceitas.addEventListener('click', () => exibirDetalhesModal('Receita'));
+    cardDespesas.addEventListener('click', () => exibirDetalhesModal('Despesa'));
+    cardSaldo.addEventListener('click', () => exibirDetalhesModal('Saldo'));
+    btnFecharDetalhes.addEventListener('click', () => modalDetalhes.style.display = 'none');
+    
     document.body.addEventListener('click', function(e) {
         if (e.target.closest('.btn-marcar-pago')) {
             const btn = e.target.closest('.btn-marcar-pago');
-            const index = btn.dataset.index;
+            const index = parseInt(btn.dataset.index, 10);
             const itemParaPagar = transacoesGeral[index];
-            if (confirm(`Deseja marcar a despesa "${itemParaPagar.Fonte}" de ${formatarMoeda(itemParaPagar.Valor)} como paga?`)) {
-                const dadosUpdate = { row: itemParaPagar.rowIndex, status: 'Pago' };
-                submeterDados(dadosUpdate);
+            
+            if (itemParaPagar && confirm(`Deseja marcar a despesa "${itemParaPagar.Fonte}" de ${formatarMoeda(itemParaPagar.Valor)} como paga?`)) {
+                itemParaPagar.Status = 'Pago';
+                atualizarAplicacao();
             }
         }
     });
@@ -419,41 +372,27 @@ document.addEventListener('DOMContentLoaded', function() {
     formRegistro.addEventListener('submit', (e) => {
         e.preventDefault();
         const valorInput = document.getElementById('reg-valor').value.replace(/\./g, '').replace(',', '.');
-        if (isNaN(parseFloat(valorInput))) { 
-            alert('Por favor, insira um valor numérico válido.');
-            return;
-        }
-        const status = document.getElementById('reg-tipo').value === 'Despesa' ? document.getElementById('reg-status').value : 'Pago';
-        const dadosParaEnviar = { 
-            data: document.getElementById('reg-data').value, 
-            tipo: document.getElementById('reg-tipo').value, 
-            valor: parseFloat(valorInput), 
-            fonte: document.getElementById('reg-fonte').value, 
-            local: document.getElementById('reg-local').value, 
-            descricao: '', 
-            status: status 
+        if (isNaN(parseFloat(valorInput))) { alert('Por favor, insira um valor numérico válido.'); return; }
+        
+        const novaTransacao = { 
+            id: Date.now(), // ID único para cada transação
+            Data: new Date(document.getElementById('reg-data').value + 'T12:00:00Z'),
+            Tipo: document.getElementById('reg-tipo').value, 
+            Valor: parseFloat(valorInput), 
+            Fonte: document.getElementById('reg-fonte').value, 
+            Local: document.getElementById('reg-local').value, 
+            Descricao: '', 
+            Status: document.getElementById('reg-tipo').value === 'Despesa' ? document.getElementById('reg-status').value : 'Pago'
         };
-        submeterDados(dadosParaEnviar);
+        
+        transacoesGeral.push(novaTransacao);
+        atualizarAplicacao();
+        
+        modalRegistro.style.display = 'none';
+        alert('Transação registrada com sucesso!');
     });
 
-    const filtroTipoBtns = document.querySelectorAll('#filtro-tipo .btn-filtro');
-    filtroTipoBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            filtroTipoBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            aplicarFiltros();
-        });
-    });
-
-    const filtroPeriodoBtns = document.querySelectorAll('#filtro-periodo .btn-filtro');
-    filtroPeriodoBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            filtroPeriodoBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            aplicarFiltros();
-        });
-    });
-
+    // Tema escuro
     function aplicarTema(tema) {
         document.body.classList.toggle('dark-mode', tema === 'dark');
         btnToggleTheme.innerHTML = tema === 'dark' ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
@@ -466,7 +405,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // --- INICIALIZAÇÃO ---
     aplicarTema(localStorage.getItem('temaDashboard') || 'light');
-    carregarDadosIniciais();
+    carregarDados();
 });
 </script>
 </body>
