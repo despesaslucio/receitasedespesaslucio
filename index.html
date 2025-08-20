@@ -3,26 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Financeiro PRO</title>
+    <title>Dashboard Financeiro com Backup</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <script src="https://cdn.jsdelivr.net/npm/date-fns"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <style>
         :root { --cor-fundo: #f0f2f5; --cor-texto: #363f5f; --cor-texto-leve: #969cb3; --cor-card: #ffffff; --cor-borda: #e2e8f0; --cor-verde: #10b981; --cor-vermelho: #ef4444; --cor-azul: #3b82f6; --cor-amarelo-fundo: #fef9c3; --cor-amarelo-texto: #a16207; --sombra-card: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); --transicao: all 0.3s ease-in-out; }
         body.dark-mode { --cor-fundo: #1a202c; --cor-texto: #e2e8f0; --cor-texto-leve: #a0aec0; --cor-card: #2d3748; --cor-borda: #4a5568; --cor-amarelo-fundo: #4a4a28; --cor-amarelo-texto: #fef08a;}
         body { font-family: 'Poppins', sans-serif; background-color: var(--cor-fundo); color: var(--cor-texto); margin: 0; padding: 20px; transition: var(--transicao); }
         .container { max-width: 1600px; margin: 0 auto; }
         header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 25px; flex-wrap: wrap; gap: 15px; border-bottom: 1px solid var(--cor-borda); margin-bottom: 25px; }
-        .header-title { display: flex; align-items: center; gap: 15px; }
+        .header-title, .header-actions { display: flex; align-items: center; gap: 15px; }
         header h1 { margin: 0; font-size: 2em; }
         .btn { padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: var(--transicao); font-weight: 500; border: none; cursor: pointer; }
         .btn-verde { background-color: var(--cor-verde); color: white; }
         .btn-vermelho { background-color: var(--cor-vermelho); color: white; }
         .btn-azul { background-color: var(--cor-azul); color: white; }
-        .btn-icon { background: none; border: none; font-size: 1.1em; cursor: pointer; color: var(--cor-texto-leve); transition: var(--transicao); padding: 5px; }
+        .btn-icon { background: none; border: none; font-size: 1.2em; cursor: pointer; color: var(--cor-texto-leve); transition: var(--transicao); padding: 5px; }
         .btn-icon:hover { color: var(--cor-texto); }
         .cards-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; margin-bottom: 25px; }
         .card { background-color: var(--cor-card); padding: 25px; border-radius: 12px; box-shadow: var(--sombra-card); border: 1px solid var(--cor-borda); transition: var(--transicao); }
@@ -68,10 +66,10 @@
         <header>
             <div class="header-title">
                 <h1>Dashboard Financeiro</h1>
-                <button class="btn-icon" id="btn-export-receitas" title="Exportar Relatório de Receitas"><i class="fa-solid fa-file-pdf"></i></button>
-                <button class="btn-icon" id="btn-export-despesas" title="Exportar Relatório de Despesas"><i class="fa-solid fa-file-invoice-dollar"></i></button>
+                <button class="btn-icon" id="btn-exportar-dados" title="Exportar (Salvar Backup)"><i class="fa-solid fa-cloud-arrow-down"></i></button>
+                <button class="btn-icon" id="btn-importar-dados" title="Importar (Carregar Backup)"><i class="fa-solid fa-cloud-arrow-up"></i></button>
             </div>
-            <div style="display: flex; align-items: center; gap: 15px;">
+            <div class="header-actions">
                 <button class="btn-icon" id="btn-toggle-theme" title="Mudar tema"><i class="fa-solid fa-moon"></i></button>
                 <div class="grupo-botoes-registro">
                     <button id="btn-abrir-modal-receita" class="btn btn-verde"><i class="fa-solid fa-plus"></i> Receita</button>
@@ -91,7 +89,7 @@
                  <div class="grupo-filtro" id="filtro-tipo"><button class="btn-filtro active" data-tipo="Todos">Todos</button><button class="btn-filtro" data-tipo="Receita">Receitas</button><button class="btn-filtro" data-tipo="Despesa">Despesas</button></div>
                  <div class="grupo-filtro" id="filtro-periodo"><button class="btn-filtro" data-periodo="Diario">Hoje</button><button class="btn-filtro" data-periodo="Semanal">Semana</button><button class="btn-filtro active" data-periodo="Mensal">Mês</button><button class="btn-filtro" data-periodo="Anual">Ano</button></div>
             </section>
-            
+
             <div id="dashboard-content">
                 <section class="grid-principal">
                     <div class="widget"> <h2 id="titulo-grafico">Evolução Financeira</h2> <canvas id="grafico-linhas"></canvas> </div>
@@ -152,28 +150,25 @@
 
     <datalist id="datalist-locais"></datalist>
     <datalist id="datalist-fontes"></datalist>
+    <input type="file" id="import-file-input" accept=".json" style="display: none;">
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     'use strict';
 
-    // --- LISTAS DE OPÇÕES PARA SUGESTÕES ---
     const locais = ["Panevie", "Buono Trigo Industria", "Casa"];
     const fontesReceita = ["Cartão Panevie", "Cartão Industria", "Cartão Buono Trigo", "Madrugada", "Outra"];
     const fontesDespesa = ["Água","Aluguel","Arrendamento padaria","Amora","Casa Garcia","Combustível Fiorino","Combustível Jumper","Comercial Mab","Confraternização","Contadora","DAS","Despesas Cartão","Doações Instituições","Diarista Lucélia","Energia","FGTS","Financiamento Solar","Forn Água","Forn Armazem","Forn ASSAI","FORN BEIJU","FORN BETANIA","FORN BOLACHA FOL","FORN BOMBONIERE","FORN BUNGE","FORN CASTANHA","FORN CACHOEIRA","FORN COCO","FORN EMBALAGENS","FORN ELMA CHIPS","FORN ESTRELA (FARINHA)","FORN FARMÁCIA","FORN FORPAN","FORN FRIGORIFICO","FORN FRIOS INDUSTRIA","FORN FRIOS PANEVIE","FORN GÁS","FORN ISIS","FORN JANDAIA","FORN LINDENBERG","FORN M. DIAS BRANCO","FORN MERC ADRIEL","FORN MILFRIOS","FORN DE OVOS","FORN OMEGA","FORN PADEIRÃO","FORN PAMONHA","FORN PÃO DE QUEIJO","FORN PEPSICO","FORN PRODUTOS DE LIMPEZA","FORN REFRI","FORN ROYAL","FORN SOLMAR","FORN SR RICARDO","FORN TEMP BOLOS","FORN TAPIOCA LEONARDO","FORN TAPIOCA ZEZO","INSS","INTERNET","PARCELAMENTO RECEITA FEDERAL","DESPESAS MOTO","PONTO DAS REFRIGERAÇÕES","MANUTENÇÃO FIORINO","MANUTENÇÃO PADARIA","PRESTAÇÃO FURGÃO","RP CONSULTORIA","SALÁRIO MICHELE","SALÁRIO ANGELA","SALÁRIO JULIANA","SALÁRIO RAIMUNDO","SALÁRIO CARLOS","SALÁRIO GABRIEL","SALÁRIO LUCIO","SALÁRIO LUCIENE","SALÁRIO ALINE","SALÁRIO ZÉ","SEGURO BRADESCO","SEGURO PREDIAL","SINDPAN","SISTEMA","TAXA BANCÁRIA","SIMPLES NACIONAL","DIARISTA","EMBALAGEM PAPAI","ENERGIA SOLAR","FORN. QUEIJO","MAQUINÁRIO CETRO","MAQUINÁRIO ITAIYMAC","MAQUILAR","SALÁRIO LUANA","SALÁRIO PAULO","SALÁRIO D. BRANCA","TIM","MARFRIOS","SALÁRIO SOCORRO","ESPORTE JÚLIA","CAGECE","CARTÃO EXTRA","CARTÃO BRADESCO","CARTÃO ITAÚ","COLÉGIO JULIA","CONSÓRCIO","ECC PARACURU","FIES LUCIO","FIES MARINA","IGREJA","JANETE","LAZER FAMÍLIA","LUZ","MANUTENÇÃO CARRO","REFORÇO JÚLIA","MERCANTIL","PLANO DE SAÚDE","PRESTAÇÃO CASA","COMBUSTIVEL","CARRO","TELEFONE","TV A CABO","CASA CCF","Outra"];
     
-    // --- VARIÁVEIS GLOBAIS ---
     let transacoesGeral = [];
     let planejadorGeral = [];
     let graficoLinhas = null;
     let graficoCategorias = null;
 
-    // --- ELEMENTOS DO DOM ---
     const totalReceitasEl = document.getElementById('total-receitas');
     const totalDespesasEl = document.getElementById('total-despesas');
     const saldoTotalEl = document.getElementById('saldo-total');
     const tituloGraficoEl = document.getElementById('titulo-grafico');
-    const btnRefresh = document.getElementById('btn-refresh');
     const btnToggleTheme = document.getElementById('btn-toggle-theme');
     const cardReceitas = document.getElementById('card-receitas');
     const cardDespesas = document.getElementById('card-despesas');
@@ -198,10 +193,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnFecharPlanejador = document.getElementById('btn-fechar-planejador');
     const btnCancelarPlanejador = document.getElementById('btn-cancelar-planejador');
     const formPlanejador = document.getElementById('form-planejador');
-    const btnExportReceitas = document.getElementById('btn-export-receitas');
-    const btnExportDespesas = document.getElementById('btn-export-despesas');
-
-    // --- FUNÇÕES UTILITÁRIAS ---
+    const btnExportarDados = document.getElementById('btn-exportar-dados');
+    const btnImportarDados = document.getElementById('btn-importar-dados');
+    const importFileInput = document.getElementById('import-file-input');
+    
     const formatarMoeda = (valor) => (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     const formatarData = (data) => data instanceof Date && !isNaN(data) ? data.toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Data inválida';
     
@@ -214,7 +209,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
-    // --- LÓGICA DE DADOS (LocalStorage) ---
     function carregarDados() {
         const dadosTransacoes = localStorage.getItem('minhasFinancas');
         const dadosPlanejador = localStorage.getItem('meuPlanejador');
@@ -225,7 +219,6 @@ document.addEventListener('DOMContentLoaded', function() {
             planejadorGeral = JSON.parse(dadosPlanejador).map(item => ({...item, Data: new Date(item.Data)}));
         }
         atualizarAplicacao();
-        verificarEexecutarBackupDiario(); // Verifica backup após carregar os dados
     }
 
     function salvarDados() {
@@ -233,14 +226,12 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('meuPlanejador', JSON.stringify(planejadorGeral));
     }
     
-    // --- FUNÇÃO MESTRA DE ATUALIZAÇÃO ---
     function atualizarAplicacao() {
         salvarDados();
         renderizarPlanejador();
         aplicarFiltros();
     }
 
-    // --- LÓGICA DE RENDERIZAÇÃO E ATUALIZAÇÃO ---
     function aplicarFiltros() {
         const tipoFiltro = document.querySelector('#filtro-tipo .active').dataset.tipo;
         const periodoFiltro = document.querySelector('#filtro-periodo .active').dataset.periodo;
@@ -313,10 +304,9 @@ document.addEventListener('DOMContentLoaded', function() {
         modalDetalhes.style.display = 'flex';
     }
     
-    function criarGraficoLinhas(transacoes) { /* Implementação completa do gráfico de linhas */ }
-    function criarGraficoCategorias(transacoes) { /* Implementação completa do gráfico de categorias */ }
+    function criarGraficoLinhas(transacoes) { /* ...código do gráfico... */ }
+    function criarGraficoCategorias(transacoes) { /* ...código do gráfico... */ }
 
-    // --- LÓGICA DE EVENTOS E INTERAÇÃO ---
     function abrirModalRegistro(tipo) {
         formRegistro.reset();
         document.getElementById('reg-data').valueAsDate = new Date();
@@ -339,7 +329,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function abrirModalPlanejador(item = null) {
         formPlanejador.reset();
-        popularDatalist(formPlanejador.querySelector('#planejador-fonte'), fontesDespesa);
+        popularDatalist(document.getElementById('datalist-fontes'), fontesDespesa);
         if (item) {
             modalPlanejadorTitulo.textContent = "Editar Conta a Pagar";
             document.getElementById('planejador-id').value = item.id;
@@ -353,8 +343,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         modalPlanejador.style.display = 'flex';
     }
-
-    btnRefresh.addEventListener('click', () => location.reload());
+    
+    function exportarParaPDF(tipo) { /* ...código de exportação PDF... */ }
+    
+    // --- EVENT LISTENERS ---
+    btnRefresh.addEventListener('click', () => { if(confirm('Isso recarregará a página. Deseja continuar?')) location.reload(); });
     btnAbrirModalReceita.addEventListener('click', () => abrirModalRegistro('Receita'));
     btnAbrirModalDespesa.addEventListener('click', () => abrirModalRegistro('Despesa'));
     btnFecharRegistro.addEventListener('click', () => modalRegistro.style.display = 'none');
@@ -384,7 +377,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const itemParaPagar = planejadorGeral[index];
             if (itemParaPagar && confirm(`Deseja marcar a despesa "${itemParaPagar.Fonte}" de ${formatarMoeda(itemParaPagar.Valor)} como paga?`)) {
                 planejadorGeral.splice(index, 1);
-                transacoesGeral.push({ ...itemParaPagar, Status: 'Pago', Tipo: 'Despesa' });
+                transacoesGeral.push({ ...itemParaPagar, Tipo: 'Despesa', Status: 'Pago' });
                 atualizarAplicacao();
             }
         } else if (target.classList.contains('btn-editar-planejado')) {
@@ -446,59 +439,58 @@ document.addEventListener('DOMContentLoaded', function() {
         aplicarTema(temaAtual);
     });
 
-    function exportarParaPDF(tipo) {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        const hoje = new Date();
-        const transacoesFiltradas = transacoesGeral.filter(t => t.Tipo === tipo);
-        const totalSemanal = transacoesFiltradas.filter(t => dateFns.isThisWeek(t.Data, { weekStartsOn: 1 })).reduce((acc, t) => acc + t.Valor, 0);
-        const totalMensal = transacoesFiltradas.filter(t => dateFns.isSameMonth(t.Data, hoje)).reduce((acc, t) => acc + t.Valor, 0);
-        const totalAnual = transacoesFiltradas.filter(t => dateFns.isSameYear(t.Data, hoje)).reduce((acc, t) => acc + t.Valor, 0);
-        
-        doc.setFontSize(18); doc.text(`Relatório de ${tipo}s`, 14, 22);
-        doc.setFontSize(11); doc.setTextColor(100);
-        const summaryText = `Total Semana Atual: ${formatarMoeda(totalSemanal)}\nTotal Mês Atual: ${formatarMoeda(totalMensal)}\nTotal Ano Atual: ${formatarMoeda(totalAnual)}`;
-        doc.text(summaryText, 14, 32);
-        const tableColumn = ["Data", "Fonte", "Local", "Valor"];
-        const tableRows = [];
-        transacoesFiltradas.sort((a,b) => b.Data - a.Data).forEach(item => {
-            const transacaoData = [ formatarData(item.Data), item.Fonte, item.Local || '-', formatarMoeda(item.Valor) ];
-            tableRows.push(transacaoData);
-        });
-        doc.autoTable({ head: [tableColumn], body: tableRows, startY: 60, theme: 'striped', headStyles: { fillColor: tipo === 'Receita' ? [22, 163, 74] : [220, 38, 38] } });
-        doc.save(`relatorio_${tipo.toLowerCase()}s.pdf`);
-    }
-
-    function verificarEexecutarBackupDiario() {
-        const agora = new Date().getTime();
-        const umDia = 24 * 60 * 60 * 1000;
-        const ultimoBackup = localStorage.getItem('backupTimestamp');
-
-        if (!ultimoBackup || (agora - ultimoBackup > umDia)) {
-            if (transacoesGeral.length > 0 || planejadorGeral.length > 0) {
-                console.log("Iniciando backup diário automático...");
-                const backupData = {
-                    transacoes: transacoesGeral,
-                    planejador: planejadorGeral
-                };
-                const jsonString = JSON.stringify(backupData, null, 2);
-                const blob = new Blob([jsonString], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                const dataFormatada = dateFns.format(new Date(), 'yyyy-MM-dd');
-                link.download = `backup-financeiro-${dataFormatada}.json`;
-                link.href = url;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-                localStorage.setItem('backupTimestamp', agora);
-                console.log("Backup concluído e timestamp atualizado.");
-            }
+    // --- LÓGICA DE BACKUP E EXPORTAÇÃO ---
+    btnExportarDados.addEventListener('click', () => {
+        if (transacoesGeral.length === 0 && planejadorGeral.length === 0) {
+            alert('Não há dados para exportar.');
+            return;
         }
-    }
-    btnExportReceitas.addEventListener('click', () => exportarParaPDF('Receita'));
-    btnExportDespesas.addEventListener('click', () => exportarParaPDF('Despesa'));
+        const backupData = {
+            transacoes: transacoesGeral,
+            planejador: planejadorGeral
+        };
+        const jsonString = JSON.stringify(backupData, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const dataFormatada = dateFns.format(new Date(), 'yyyy-MM-dd');
+        link.download = `backup-financeiro-${dataFormatada}.json`;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    });
+
+    btnImportarDados.addEventListener('click', () => {
+        importFileInput.click();
+    });
+
+    importFileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const backup = JSON.parse(e.target.result);
+                if (Array.isArray(backup.transacoes) && Array.isArray(backup.planejador)) {
+                    if (confirm('Isso irá substituir TODOS os dados atuais. Deseja continuar?')) {
+                        transacoesGeral = backup.transacoes.map(item => ({...item, Data: new Date(item.Data)}));
+                        planejadorGeral = backup.planejador.map(item => ({...item, Data: new Date(item.Data)}));
+                        atualizarAplicacao();
+                        alert('Backup restaurado com sucesso!');
+                    }
+                } else {
+                    throw new Error('Arquivo de backup inválido.');
+                }
+            } catch (err) {
+                alert('Erro ao ler o arquivo de backup: ' + err.message);
+            } finally {
+                importFileInput.value = ''; // Reseta o input de arquivo
+            }
+        };
+        reader.readAsText(file);
+    });
     
     // --- INICIALIZAÇÃO ---
     aplicarTema(localStorage.getItem('temaDashboard') || 'light');
