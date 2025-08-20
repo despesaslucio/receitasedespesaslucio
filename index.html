@@ -97,7 +97,7 @@
                     <div class="widget"> <h2 id="titulo-grafico">Evolução Financeira</h2> <canvas id="grafico-linhas"></canvas> </div>
                     <div class="widget"> <h2 id="titulo-categorias">Top 10 Despesas por Fonte</h2> <canvas id="grafico-categorias"></canvas> </div>
                     <div class="widget" style="grid-column: 1 / -1;"> 
-                        <h2>Planejador de Contas</h2>
+                        <h2>Planejador de Contas <button class="btn-icon" id="btn-abrir-modal-planejador" title="Adicionar conta a planejar"><i class="fa-solid fa-plus"></i></button></h2>
                         <div class="tabela-contas-wrapper"><table class="tabela-contas"><thead><tr><th>Data</th><th>Fonte</th><th>Valor</th><th>Ações</th></tr></thead><tbody id="corpo-tabela-planejador"></tbody></table></div>
                     </div>
                 </section>
@@ -126,6 +126,24 @@
                     <div class="form-botoes">
                         <button type="button" class="btn" id="btn-cancelar-registro" style="background-color: #ccc;">Cancelar</button>
                         <button type="submit" class="btn" id="btn-salvar-registro"><span class="btn-text">Salvar</span><i class="fa-solid fa-spinner fa-spin" style="display: none;"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-planejador" class="modal-container">
+        <div class="modal-content">
+            <div class="modal-header"><h2 id="modal-planejador-titulo">Adicionar Conta a Pagar</h2><button id="btn-fechar-planejador" class="btn-icon">&times;</button></div>
+            <div class="modal-body">
+                <form id="form-planejador">
+                    <input type="hidden" id="planejador-id">
+                    <div class="form-grupo"><label for="planejador-data">Data de Vencimento</label><input type="date" id="planejador-data" required></div>
+                    <div class="form-grupo"><label for="planejador-fonte">Fonte da Despesa</label><input type="text" id="planejador-fonte" list="datalist-fontes" placeholder="Selecione ou digite" required></div>
+                    <div class="form-grupo"><label for="planejador-valor">Valor (R$)</label><input type="text" inputmode="decimal" id="planejador-valor" placeholder="150,50" required></div>
+                    <div class="form-botoes">
+                        <button type="button" class="btn" id="btn-cancelar-planejador" style="background-color: #ccc;">Cancelar</button>
+                        <button type="submit" class="btn btn-azul"><span class="btn-text">Salvar</span></button>
                     </div>
                 </form>
             </div>
@@ -177,6 +195,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const datalistFontes = document.getElementById('datalist-fontes');
     const btnExportReceitas = document.getElementById('btn-export-receitas');
     const btnExportDespesas = document.getElementById('btn-export-despesas');
+    const modalPlanejador = document.getElementById('modal-planejador');
+    const btnAbrirModalPlanejador = document.getElementById('btn-abrir-modal-planejador');
+    const btnFecharPlanejador = document.getElementById('btn-fechar-planejador');
+    const btnCancelarPlanejador = document.getElementById('btn-cancelar-planejador');
+    const formPlanejador = document.getElementById('form-planejador');
 
     const formatarMoeda = (valor) => (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     const formatarData = (data) => data instanceof Date && !isNaN(data) ? data.toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Data inválida';
@@ -215,12 +238,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (result.status !== 'success') throw new Error(result.message);
             alert('Transação registrada com sucesso!');
             if (modalRegistro.style.display !== 'none') modalRegistro.style.display = 'none';
+            if (modalPlanejador && modalPlanejador.style.display !== 'none') modalPlanejador.style.display = 'none';
             setTimeout(() => carregarDadosIniciais(), 1500);
         } catch (error) {
             alert('Erro ao registrar: ' + error.message);
             if (itemOriginal) { itemOriginal.Status = 'Pendente'; renderizarPlanejador(); }
         } finally {
-             if (btnText && btnSpinner) { btnSalvarRegistro.disabled = false; btnText.textContent = 'Salvar'; btnSpinner.style.display = 'none'; }
+            if (btnText && btnSpinner) { btnSalvarRegistro.disabled = false; btnText.textContent = 'Salvar'; btnSpinner.style.display = 'none'; }
         }
     }
 
@@ -278,13 +302,12 @@ document.addEventListener('DOMContentLoaded', function() {
         let transacoesParaExibir = [];
         if (tipo === 'Receita' || tipo === 'Despesa') {
             modalDetalhesTitulo.textContent = `Detalhes de ${tipo}s`;
-            transacoesParaExibir = transacoesVisiveisquantity: 1
-unit_price: 150.50
-description: "Registro de teste para despesa pendente"
+            transacoesParaExibir = transacoesVisiveis.filter(t => t.Tipo === tipo);
+        } else {
             modalDetalhesTitulo.textContent = `Detalhes do Período`;
             transacoesParaExibir = transacoesVisiveis;
         }
-        transacoesParaExibir.sort((a,b) => b.Data - a.Data);
+        transacoesParaExibir.sort((a, b) => b.Data - a.Data);
         let html = '<p style="text-align:center; padding: 20px;">Nenhuma transação encontrada.</p>';
         if (transacoesParaExibir.length > 0) {
             const tableRows = transacoesParaExibir.map(t => `<tr style="color: ${t.Tipo === 'Receita' ? 'var(--cor-verde)' : 'var(--cor-vermelho)'}"><td>${formatarData(t.Data)}</td><td>${t.Local || '-'}</td><td>${t.Fonte || '-'}</td><td style="text-align:right;">${formatarMoeda(t.Valor)}</td></tr>`).join('');
@@ -293,6 +316,26 @@ description: "Registro de teste para despesa pendente"
         modalDetalhesConteudo.innerHTML = html;
         modalDetalhes.style.display = 'flex';
     }
+
+    function exportarParaPDF(tipo) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const transacoesVisiveis = transacoesGeral.filter(t => t.Status !== 'Pendente' && t.Tipo === tipo);
+        const periodoFiltro = document.querySelector('#filtro-periodo .active').dataset.periodo;
+        doc.text(`Relatório de ${tipo}s (${periodoFiltro})`, 10, 10);
+        const tableData = transacoesVisiveis.map(t => [
+            formatarData(t.Data),
+            t.Local || '-',
+            t.Fonte || '-',
+            formatarMoeda(t.Valor)
+        ]);
+        doc.autoTable({
+            head: [['Data', 'Local', 'Fonte', 'Valor']],
+            body: tableData,
+            startY: 20
+        });
+        doc.save(`relatorio-${tipo.toLowerCase()}-${new Date().toISOString().split('T')[0]}.pdf`);
+    }
     
     function criarGraficoLinhas(transacoes) {
         const ctx = document.getElementById('grafico-linhas').getContext('2d');
@@ -300,7 +343,11 @@ description: "Registro de teste para despesa pendente"
         if (transacoes.length === 0) { graficoLinhas = null; return; }
         const periodoFiltro = document.querySelector('#filtro-periodo .active').dataset.periodo;
         let unit;
-        switch(periodoFiltro) { case 'Diario': unit = 'hour'; break; case 'Semanal': case 'Mensal': unit = 'day'; break; case 'Anual': unit = 'month'; break; }
+        switch(periodoFiltro) { 
+            case 'Diario': unit = 'hour'; break; 
+            case 'Semanal': case 'Mensal': unit = 'day'; break; 
+            case 'Anual': unit = 'month'; break; 
+        }
         const dadosAgrupados = transacoes.reduce((acc, t) => {
             const d = t.Data;
             if (!d || isNaN(d.getTime())) return acc;
@@ -316,7 +363,37 @@ description: "Registro de teste para despesa pendente"
             return acc;
         }, {});
         const labels = Object.keys(dadosAgrupados).sort((a,b) => new Date(a) - new Date(b));
-        graficoLinhas = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: 'Receitas', data: labels.map(key => dadosAgrupados[key].receitas), borderColor: 'var(--cor-verde)', backgroundColor: 'rgba(16, 185, 129, 0.2)', fill: true, tension: 0.3 }, { label: 'Despesas', data: labels.map(key => dadosAgrupados[key].despesas), borderColor: 'var(--cor-vermelho)', backgroundColor: 'rgba(239, 68, 68, 0.2)', fill: true, tension: 0.3 }] }, options: { responsive: true, scales: { x: { type: 'time', time: { unit: unit, tooltipFormat: 'dd/MM/yyyy' } }, y: { beginAtZero: true, ticks: { callback: value => formatarMoeda(value) } } } } });
+        graficoLinhas = new Chart(ctx, { 
+            type: 'line', 
+            data: { 
+                labels: labels, 
+                datasets: [
+                    { 
+                        label: 'Receitas', 
+                        data: labels.map(key => dadosAgrupados[key].receitas), 
+                        borderColor: 'var(--cor-verde)', 
+                        backgroundColor: 'rgba(16, 185, 129, 0.2)', 
+                        fill: true, 
+                        tension: 0.3 
+                    }, 
+                    { 
+                        label: 'Despesas', 
+                        data: labels.map(key => dadosAgrupados[key].despesas), 
+                        borderColor: 'var(--cor-vermelho)', 
+                        backgroundColor: 'rgba(239, 68, 68, 0.2)', 
+                        fill: true, 
+                        tension: 0.3 
+                    }
+                ] 
+            }, 
+            options: { 
+                responsive: true, 
+                scales: { 
+                    x: { type: 'time', time: { unit: unit, tooltipFormat: 'dd/MM/yyyy' } }, 
+                    y: { beginAtZero: true, ticks: { callback: value => formatarMoeda(value) } } 
+                } 
+            } 
+        });
     }
     
     function criarGraficoCategorias(transacoes) {
@@ -332,7 +409,23 @@ description: "Registro de teste para despesa pendente"
         }, {});
         const top10 = Object.entries(dadosAgrupados).sort(([,a],[,b]) => b - a).slice(0, 10);
         document.getElementById('titulo-categorias').textContent = 'Top 10 Despesas por Fonte';
-        graficoCategorias = new Chart(ctx, { type: 'bar', data: { labels: top10.map(([fonte]) => fonte), datasets: [{ label: `Valor Total`, data: top10.map(([,valor]) => valor), backgroundColor: 'rgba(239, 68, 68, 0.7)' }] }, options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { callback: value => formatarMoeda(value) } } } } });
+        graficoCategorias = new Chart(ctx, { 
+            type: 'bar', 
+            data: { 
+                labels: top10.map(([fonte]) => fonte), 
+                datasets: [{ 
+                    label: `Valor Total`, 
+                    data: top10.map(([,valor]) => valor), 
+                    backgroundColor: 'rgba(239, 68, 68, 0.7)' 
+                }] 
+            }, 
+            options: { 
+                indexAxis: 'y', 
+                responsive: true, 
+                plugins: { legend: { display: false } }, 
+                scales: { x: { ticks: { callback: value => formatarMoeda(value) } } } 
+            } 
+        });
     }
 
     function abrirModalRegistro(tipo) {
@@ -355,6 +448,15 @@ description: "Registro de teste para despesa pendente"
         modalRegistro.style.display = 'flex';
     }
 
+    function abrirModalPlanejador() {
+        formPlanejador.reset();
+        popularDatalist(datalistFontes, fontesDespesa);
+        modalPlanejadorTitulo.textContent = "Adicionar Conta a Pagar";
+        document.getElementById('planejador-id').value = '';
+        document.getElementById('planejador-data').valueAsDate = new Date();
+        modalPlanejador.style.display = 'flex';
+    }
+
     // --- EVENT LISTENERS ---
     btnRefresh.addEventListener('click', carregarDadosIniciais);
     cardReceitas.addEventListener('click', () => exibirDetalhesModal('Receita'));
@@ -365,6 +467,11 @@ description: "Registro de teste para despesa pendente"
     btnAbrirModalDespesa.addEventListener('click', () => abrirModalRegistro('Despesa'));
     btnFecharRegistro.addEventListener('click', () => modalRegistro.style.display = 'none');
     btnCancelarRegistro.addEventListener('click', () => modalRegistro.style.display = 'none');
+    btnExportReceitas.addEventListener('click', () => exportarParaPDF('Receita'));
+    btnExportDespesas.addEventListener('click', () => exportarParaPDF('Despesa'));
+    btnAbrirModalPlanejador.addEventListener('click', abrirModalPlanejador);
+    btnFecharPlanejador.addEventListener('click', () => modalPlanejador.style.display = 'none');
+    btnCancelarPlanejador.addEventListener('click', () => modalPlanejador.style.display = 'none');
     
     document.body.addEventListener('click', function(e) {
         if (e.target.closest('.btn-marcar-pago')) {
@@ -381,8 +488,32 @@ description: "Registro de teste para despesa pendente"
         e.preventDefault();
         const valorInput = document.getElementById('reg-valor').value.replace(/\./g, '').replace(',', '.');
         if (isNaN(parseFloat(valorInput))) { alert('Por favor, insira um valor numérico válido.'); return; }
-        const dadosParaEnviar = { data: document.getElementById('reg-data').value, tipo: document.getElementById('reg-tipo').value, valor: parseFloat(valorInput), fonte: document.getElementById('reg-fonte').value, local: document.getElementById('reg-local').value, descricao: '', status: document.getElementById('reg-tipo').value === 'Despesa' ? document.getElementById('reg-status').value : 'Pago' };
+        const dadosParaEnviar = { 
+            data: document.getElementById('reg-data').value, 
+            tipo: document.getElementById('reg-tipo').value, 
+            valor: parseFloat(valorInput), 
+            fonte: document.getElementById('reg-fonte').value, 
+            local: document.getElementById('reg-local').value, 
+            descricao: '', 
+            status: document.getElementById('reg-tipo').value === 'Despesa' ? document.getElementById('reg-status').value : 'Pago' 
+        };
         submeterDados(dadosParaEnviar);
+    });
+
+    formPlanejador.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const valorInput = document.getElementById('planejador-valor').value.replace(/\./g, '').replace(',', '.');
+        if (isNaN(parseFloat(valorInput))) { alert('Por favor, insira um valor numérico válido.'); return; }
+        const dados = {
+            data: document.getElementById('planejador-data').value,
+            tipo: 'Despesa',
+            fonte: document.getElementById('planejador-fonte').value,
+            local: '',
+            valor: parseFloat(valorInput),
+            descricao: '',
+            status: 'Pendente'
+        };
+        submeterDados(dados);
     });
 
     // Tema escuro
