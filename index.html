@@ -347,7 +347,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function exportarParaPDF(tipo) { /* ...código de exportação PDF... */ }
     
     // --- EVENT LISTENERS ---
-    btnRefresh.addEventListener('click', () => { if(confirm('Isso recarregará a página. Deseja continuar?')) location.reload(); });
+    //btnRefresh.addEventListener('click', () => { if(confirm('Isso recarregará a página. Deseja continuar?')) location.reload(); });
     btnAbrirModalReceita.addEventListener('click', () => abrirModalRegistro('Receita'));
     btnAbrirModalDespesa.addEventListener('click', () => abrirModalRegistro('Despesa'));
     btnFecharRegistro.addEventListener('click', () => modalRegistro.style.display = 'none');
@@ -499,3 +499,4 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
+
