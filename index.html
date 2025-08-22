@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- DADOS LOCAIS (Para sugestões) ---
     const locais = ["Panevie", "Buono Trigo Industria", "Casa"];
     const fontesReceita = ["Cartão Panevie", "Cartão Industria", "Cartão Buono Trigo", "Madrugada", "Outra"];
-    const fontesDespesa = ["Água","Aluguel","Arrendamento padaria","Amora","Casa Garcia","Combustível Fiorino","Combustível Jumper","Comercial Mab","Confraternização","Contadora","DAS","Despesas Cartão","Doações Instituições","Diarista Lucélia","Energia","FGTS","Financiamento Solar","Forn Água","Forn Armazem","Forn ASSAI","FORN BEIJU","FORN BETANIA","FORN BOLACHA FOL","FORN BOMBONIERE","FORN BUNGE","FORN CASTANHA","FORN CACHOEIRA","FORN COCO","FORN EMBALAGENS","FORN ELMA CHIPS","FORN ESTRELA (FARINHA)","FORN FARMÁCIA","FORN FORPAN","FORN FRIGORIFICO","FORN FRIOS INDUSTRIA","FORN FRIOS PANEVIE","FORN GÁS","FORN ISIS","FORN JANDAIA","FORN LINDENBERG","FORN M. DIAS BRANCO","FORN MERC ADRIEL","FORN MILFRIOS","FORN DE OVOS","FORN OMEGA","FORN PADEIRÃO","FORN PAMONHA","FORN PÃO DE QUEIJO","FORN PEPSICO","FORN PRODUTOS DE LIMPEZA","FORN REFRI","FORN ROYAL","FORN SOLMAR","FORN SR RICARDO","FORN TEMP BOLOS","FORN TAPIOCA LEONARDO","FORN TAPIOCA ZEZO","INSS","INTERNET","PARCELAMENTO RECEITA FEDERAL","DESPESAS MOTO","PONTO DAS REFRIGERAÇÕES","MANUTENÇÃO FIORINO","MANUTENÇÃO PADARIA","PRESTAÇÃO FURGÃO","RP CONSULTORIA","SALÁRIO MICHELE","SALÁRIO ANGELA","SALÁRIO JULIANA","SALÁRIO RAIMUNDO","SALÁRIO CARLOS","SALÁRIO GABRIEL","SALÁRIO LUCIO","SALÁRIO LUCIENE","SALÁRIO ALINE","SALÁRIO ZÉ","SEGURO BRADESCO","SEGURO PREDIAL","SINDPAN","SISTEMA","TAXA BANCÁRIA","SIMPLES NACIONAL","DIARISTA","EMBALAGEM PAPAI","ENERGIA SOLAR","FORN. QUEIJO","MAQUINÁRIO CETRO","MAQUINÁRIO ITAIYMAC","MAQUILAR","SALÁRIO LUANA","SALÁRIO PAULO","SALÁRIO D. BRANCA","TIM","MARFRIOS","SALÁRIO SOCORRO","ESPORTE JÚLIA","CAGECE","CARTÃO EXTRA","CARTÃO BRADESCO","CARTÃO ITAÚ","COLÉGIO JULIA","CONSÓRCIO","ECC PARACURU","FIES LUCIO","FIES MARINA","IGREJA","JANETE","LAZER FAMÍLIA","LUZ","MANUTENÇÃO CARRO","REFORÇO JÚLIA","MERCANTIL","PLANO DE SAÚDE","PRESTAÇÃO CASA","COMBUSTIVEL","CARRO","TELEFONE","TV A CABO","CASA CCF","Outra"];
+    const fontesDespesa = ["Água","Aluguel","Arrendamento padaria","Amora","Casa Garcia","Combustível Fiorino","Combustível Jumper","Comercial Mab","Confraternização","Contadora","DAS","Despesas Cartão","Doações Instituições","Diarista Lucélia","Energia","FGTS","Financiamento Solar","Forn Água","Forn Armazem","Forn ASSAI","FORN BEIJU","FORN BETANIA","FORN BOLACHA FOL","FORN BOMBONIERE","FORN BUNGE","FORN CASTANHA","FORN CACHOEIRA","FORN COCO","FORN EMBALAGENS","FORN ELMA CHIPS","FORN ESTRELA (FARINHA)","FORN FARMÁCIA","FORN FORPAN","FORN FRIGORIFICO","FORN FRIOS INDUSTRIA","FORN FRIOS PANEVIE","FORN GÁS","FORN ISIS","FORN JANDAIA","FORN LINDENBERG","FORN M. DIAS BRANCO","FORN MERC ADRIEL","FORN MILFRIOS","FORN DE OVOS","FORN OMEGA","FORN PADEIRÃO","FORN PAMONHA","FORN PÃO DE QUEIJO","FORN PEPSICO","FORN PRODUTOS DE LIMPEZA","FORN REFRI","FORN ROYAL","FORN SOLMAR","FORN SR RICARDO","FORN TEMP BOLOS","FORN TAPIOCA LEONARDO","FORN TAPIOCA ZEZO","INSS","INTERNET","PARCELAMENTO RECEITA FEDERAL","DESPESAS MOTO","PONTO DAS REFRIGERAÇÕES","MANUTENÇÃO FIORINO","MANUTENÇÃO PADARIA","PRESTAÇÃO FURGÃO","RP CONSULTORIA","SALÁRIO MICHELE","SALÁRIO ANGELA","SALÁRIO JULIANA","SALÁRIO RAIMUNDO","SALÁRIO CARLOS","SALÁRIO GABRIEL","SALÁRIO LUCIO","SALÁRIO LUCIENE","SALÁRIO ALINE","SALÁRIO ZÉ","SEGURO BRADESCO","SEGURO PREDIAL","SINDPAN","SISTEMA","TAXA BANCÁRIA","SIMPLES NACIONAL","DIARISTA","EMBALAGEM PAPAI","ENERGIA SOLAR","FORN. QUEIJO","MAQUINÁRIO CETRO","MAQUINÁRIO ITAIYMAC","MAQUILAR","SALÁRIO LUANA","SALÁrio PAULO","SALÁRIO D. BRANCA","TIM","MARFRIOS","SALÁRIO SOCORRO","ESPORTE JÚLIA","CAGECE","CARTÃO EXTRA","CARTÃO BRADESCO","CARTÃO ITAÚ","COLÉGIO JULIA","CONSÓRCIO","ECC PARACURU","FIES LUCIO","FIES MARINA","IGREJA","JANETE","LAZER FAMÍLIA","LUZ","MANUTENÇÃO CARRO","REFORÇO JÚLIA","MERCANTIL","PLANO DE SAÚDE","PRESTAÇÃO CASA","COMBUSTIVEL","CARRO","TELEFONE","TV A CABO","CASA CCF","Outra"];
     
     let transacoesGeral = [];
     let graficoLinhas = null;
@@ -179,7 +179,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const totalDespesasEl = document.getElementById('total-despesas');
     const saldoTotalEl = document.getElementById('saldo-total');
     const corpoTabelaPlanejador = document.getElementById('corpo-tabela-planejador');
-    // ... (restante dos seletores, sem alteração)
     const btnRefresh = document.getElementById('btn-refresh');
     const btnToggleTheme = document.getElementById('btn-toggle-theme');
     const cardReceitas = document.getElementById('card-receitas');
@@ -221,10 +220,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const { data, error } = await supabase.from('transacoes').select('*');
             if (error) throw error;
             
-            // O campo de data vem como string, convertemos para objeto Date
             transacoesGeral = data.map(item => ({
                 ...item,
-                // O Supabase retorna a data como string (ex: '2025-08-22'), adicionamos 'T00:00:00' para evitar problemas de fuso horário
                 Data: new Date(`${item.data}T00:00:00`) 
             })).filter(t => t.Data instanceof Date && !isNaN(t.Data));
             
@@ -260,7 +257,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (modalRegistro.style.display !== 'none') modalRegistro.style.display = 'none';
             if (modalPlanejador && modalPlanejador.style.display !== 'none') modalPlanejador.style.display = 'none';
             
-            carregarDadosIniciais(); // Recarrega os dados para refletir a mudança
+            carregarDadosIniciais();
         } catch (error) {
             alert('Erro ao salvar no Supabase: ' + error.message);
         } finally {
@@ -312,14 +309,12 @@ document.addEventListener('DOMContentLoaded', function() {
         planejadorItens.forEach(item => {
             const tr = document.createElement('tr');
             tr.className = `status-Pendente`;
-            // ALTERADO: de data-row-index para data-id
             tr.innerHTML = `<td>${formatarData(item.Data)}</td><td>${item.fonte}</td><td>${formatarMoeda(item.valor)}</td>
             <td class="acoes"><button class="btn-icon btn-marcar-pago" data-id="${item.id}" title="Marcar como Pago">✔️</button></td>`;
             corpoTabelaPlanejador.appendChild(tr);
         });
     }
 
-    // --- FUNÇÕES DE UI E GRÁFICOS (Sem grandes alterações) ---
     function exibirDetalhesModal(tipo) {
         const transacoesVisiveis = transacoesGeral.filter(t => t.status !== 'Pendente');
         let transacoesParaExibir = [];
@@ -440,7 +435,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.body.addEventListener('click', function(e) {
         if (e.target.closest('.btn-marcar-pago')) {
             const btn = e.target.closest('.btn-marcar-pago');
-            const transacaoId = btn.dataset.id; // ALTERADO: para data-id
+            const transacaoId = btn.dataset.id;
             const itemParaPagar = transacoesGeral.find(t => t.id == transacaoId);
             if (itemParaPagar && confirm(`Deseja marcar a despesa "${itemParaPagar.fonte}" de ${formatarMoeda(itemParaPagar.valor)} como paga?`)) {
                 submeterDados({ id: transacaoId }, 'updateStatus');
@@ -452,7 +447,6 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         const valorInput = document.getElementById('reg-valor').value.replace(/\./g, '').replace(',', '.');
         if (isNaN(parseFloat(valorInput))) { alert('Por favor, insira um valor numérico válido.'); return; }
-        // Dados formatados para a tabela 'transacoes'
         const dadosParaEnviar = { 
             data: document.getElementById('reg-data').value, 
             tipo: document.getElementById('reg-tipo').value, 
