@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Financeiro Definitivo</title>
+    <title>Dashboard Financeiro com Supabase</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <script src="https://cdn.jsdelivr.net/npm/date-fns"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --cor-fundo: #f0f2f5; --cor-texto: #363f5f; --cor-texto-leve: #969cb3; --cor-card: #ffffff; --cor-borda: #e2e8f0; --cor-verde: #10b981; --cor-vermelho: #ef4444; --cor-azul: #3b82f6; --cor-amarelo-fundo: #fef9c3; --cor-amarelo-texto: #a16207; --sombra-card: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); --transicao: all 0.3s ease-in-out; }
         body.dark-mode { --cor-fundo: #1a202c; --cor-texto: #e2e8f0; --cor-texto-leve: #a0aec0; --cor-card: #2d3748; --cor-borda: #4a5568; --cor-amarelo-fundo: #4a4a28; --cor-amarelo-texto: #fef08a;}
@@ -96,7 +97,7 @@
                 <section class="grid-principal">
                     <div class="widget"> <h2 id="titulo-grafico">Evolução Financeira</h2> <canvas id="grafico-linhas"></canvas> </div>
                     <div class="widget"> <h2 id="titulo-categorias">Top 10 Despesas por Fonte</h2> <canvas id="grafico-categorias"></canvas> </div>
-                    <div class="widget" style="grid-column: 1 / -1;"> 
+                    <div class="widget" style="grid-column: 1 / -1;">
                         <h2>Planejador de Contas <button class="btn-icon" id="btn-abrir-modal-planejador" title="Adicionar conta a planejar"><i class="fa-solid fa-plus"></i></button></h2>
                         <div class="tabela-contas-wrapper"><table class="tabela-contas"><thead><tr><th>Data</th><th>Fonte</th><th>Valor</th><th>Ações</th></tr></thead><tbody id="corpo-tabela-planejador"></tbody></table></div>
                     </div>
@@ -104,7 +105,7 @@
             </div>
         </main>
     </div>
-    
+
     <div id="modal-detalhes" class="modal-container">
         <div class="modal-content">
             <div class="modal-header"><h2 id="modal-detalhes-titulo">Detalhes</h2><button id="btn-fechar-detalhes" class="btn-icon">&times;</button></div>
@@ -157,8 +158,12 @@
 document.addEventListener('DOMContentLoaded', function() {
     'use strict';
 
-    const apiUrl = 'https://script.google.com/macros/s/AKfycbynLuoIN4mWIekuWVY8iSnlxwfL3mKSAPkn3NsxFIdm-3bMfTjvRGYN1hVEcdqM9dBc/exec';
-    
+    // --- CONFIGURAÇÃO SUPABASE ---
+    const SUPABASE_URL = 'https://ixnehktrmckhnavjexhr.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4bmVoa3RybWNraG5hdmpleGhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4OTkxMzksImV4cCI6MjA3MTQ3NTEzOX0.bU6rSkZlNV5kzRzDUi4eFYnu2SETWYRwP6h6S75am4c';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // --- DADOS LOCAIS (Para sugestões) ---
     const locais = ["Panevie", "Buono Trigo Industria", "Casa"];
     const fontesReceita = ["Cartão Panevie", "Cartão Industria", "Cartão Buono Trigo", "Madrugada", "Outra"];
     const fontesDespesa = ["Água","Aluguel","Arrendamento padaria","Amora","Casa Garcia","Combustível Fiorino","Combustível Jumper","Comercial Mab","Confraternização","Contadora","DAS","Despesas Cartão","Doações Instituições","Diarista Lucélia","Energia","FGTS","Financiamento Solar","Forn Água","Forn Armazem","Forn ASSAI","FORN BEIJU","FORN BETANIA","FORN BOLACHA FOL","FORN BOMBONIERE","FORN BUNGE","FORN CASTANHA","FORN CACHOEIRA","FORN COCO","FORN EMBALAGENS","FORN ELMA CHIPS","FORN ESTRELA (FARINHA)","FORN FARMÁCIA","FORN FORPAN","FORN FRIGORIFICO","FORN FRIOS INDUSTRIA","FORN FRIOS PANEVIE","FORN GÁS","FORN ISIS","FORN JANDAIA","FORN LINDENBERG","FORN M. DIAS BRANCO","FORN MERC ADRIEL","FORN MILFRIOS","FORN DE OVOS","FORN OMEGA","FORN PADEIRÃO","FORN PAMONHA","FORN PÃO DE QUEIJO","FORN PEPSICO","FORN PRODUTOS DE LIMPEZA","FORN REFRI","FORN ROYAL","FORN SOLMAR","FORN SR RICARDO","FORN TEMP BOLOS","FORN TAPIOCA LEONARDO","FORN TAPIOCA ZEZO","INSS","INTERNET","PARCELAMENTO RECEITA FEDERAL","DESPESAS MOTO","PONTO DAS REFRIGERAÇÕES","MANUTENÇÃO FIORINO","MANUTENÇÃO PADARIA","PRESTAÇÃO FURGÃO","RP CONSULTORIA","SALÁRIO MICHELE","SALÁRIO ANGELA","SALÁRIO JULIANA","SALÁRIO RAIMUNDO","SALÁRIO CARLOS","SALÁRIO GABRIEL","SALÁRIO LUCIO","SALÁRIO LUCIENE","SALÁRIO ALINE","SALÁRIO ZÉ","SEGURO BRADESCO","SEGURO PREDIAL","SINDPAN","SISTEMA","TAXA BANCÁRIA","SIMPLES NACIONAL","DIARISTA","EMBALAGEM PAPAI","ENERGIA SOLAR","FORN. QUEIJO","MAQUINÁRIO CETRO","MAQUINÁRIO ITAIYMAC","MAQUILAR","SALÁRIO LUANA","SALÁRIO PAULO","SALÁRIO D. BRANCA","TIM","MARFRIOS","SALÁRIO SOCORRO","ESPORTE JÚLIA","CAGECE","CARTÃO EXTRA","CARTÃO BRADESCO","CARTÃO ITAÚ","COLÉGIO JULIA","CONSÓRCIO","ECC PARACURU","FIES LUCIO","FIES MARINA","IGREJA","JANETE","LAZER FAMÍLIA","LUZ","MANUTENÇÃO CARRO","REFORÇO JÚLIA","MERCANTIL","PLANO DE SAÚDE","PRESTAÇÃO CASA","COMBUSTIVEL","CARRO","TELEFONE","TV A CABO","CASA CCF","Outra"];
@@ -167,12 +172,14 @@ document.addEventListener('DOMContentLoaded', function() {
     let graficoLinhas = null;
     let graficoCategorias = null;
 
+    // --- SELETORES DE ELEMENTOS ---
     const loadingDiv = document.getElementById('loading');
     const dashboardContentDiv = document.getElementById('dashboard-content');
     const totalReceitasEl = document.getElementById('total-receitas');
     const totalDespesasEl = document.getElementById('total-despesas');
     const saldoTotalEl = document.getElementById('saldo-total');
-    const tituloGraficoEl = document.getElementById('titulo-grafico');
+    const corpoTabelaPlanejador = document.getElementById('corpo-tabela-planejador');
+    // ... (restante dos seletores, sem alteração)
     const btnRefresh = document.getElementById('btn-refresh');
     const btnToggleTheme = document.getElementById('btn-toggle-theme');
     const cardReceitas = document.getElementById('card-receitas');
@@ -190,7 +197,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnCancelarRegistro = document.getElementById('btn-cancelar-registro');
     const formRegistro = document.getElementById('form-registro');
     const btnSalvarRegistro = document.getElementById('btn-salvar-registro');
-    const corpoTabelaPlanejador = document.getElementById('corpo-tabela-planejador');
     const datalistLocais = document.getElementById('datalist-locais');
     const datalistFontes = document.getElementById('datalist-fontes');
     const btnExportReceitas = document.getElementById('btn-export-receitas');
@@ -201,48 +207,62 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnCancelarPlanejador = document.getElementById('btn-cancelar-planejador');
     const formPlanejador = document.getElementById('form-planejador');
 
+    // --- FUNÇÕES AUXILIARES ---
     const formatarMoeda = (valor) => (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     const formatarData = (data) => data instanceof Date && !isNaN(data) ? data.toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Data inválida';
     const popularDatalist = (datalistEl, lista) => { datalistEl.innerHTML = ''; lista.sort().forEach(item => { const option = document.createElement('option'); option.value = item; datalistEl.appendChild(option); }); };
 
+    // --- FUNÇÕES PRINCIPAIS (COM SUPABASE) ---
     async function carregarDadosIniciais() {
         loadingDiv.style.display = 'block';
         dashboardContentDiv.style.display = 'none';
         btnRefresh.firstElementChild.classList.add('fa-spin');
         try {
-            const response = await fetch(apiUrl);
-            if (!response.ok) throw new Error(`Erro na rede (Status: ${response.status})`);
-            const result = await response.json();
-            if (result.status === 'error') throw new Error(result.message);
-            if (!Array.isArray(result)) throw new Error('A resposta da API não é uma lista.');
-            transacoesGeral = result.map(item => ({...item, Data: new Date(item.Data)})).filter(t => t.Data instanceof Date && !isNaN(t.Data));
+            const { data, error } = await supabase.from('transacoes').select('*');
+            if (error) throw error;
+            
+            // O campo de data vem como string, convertemos para objeto Date
+            transacoesGeral = data.map(item => ({
+                ...item,
+                // O Supabase retorna a data como string (ex: '2025-08-22'), adicionamos 'T00:00:00' para evitar problemas de fuso horário
+                Data: new Date(`${item.data}T00:00:00`) 
+            })).filter(t => t.Data instanceof Date && !isNaN(t.Data));
+            
             aplicarFiltros();
             loadingDiv.style.display = 'none';
             dashboardContentDiv.style.display = 'block';
         } catch (error) {
-            console.error('Erro ao buscar dados:', error);
+            console.error('Erro ao buscar dados do Supabase:', error);
             loadingDiv.innerHTML = `<p style="color:var(--cor-vermelho);"><i class="fa-solid fa-circle-xmark"></i> Falha ao carregar: ${error.message}.</p>`;
         } finally {
             btnRefresh.firstElementChild.classList.remove('fa-spin');
         }
     }
 
-    async function submeterDados(dados, itemOriginal = null) {
+    async function submeterDados(dados, acao = 'insert') {
         const btnText = btnSalvarRegistro.querySelector('.btn-text');
         const btnSpinner = btnSalvarRegistro.querySelector('.fa-spinner');
         if (btnText && btnSpinner) { btnText.textContent = 'Salvando...'; btnSpinner.style.display = 'inline-block'; btnSalvarRegistro.disabled = true; }
+        
         try {
-            const response = await fetch(apiUrl, { method: 'POST', body: JSON.stringify(dados), headers: {'Content-Type': 'application/json'} });
-            if (!response.ok) throw new Error(`Erro na rede ao salvar (Status: ${response.status})`);
-            const result = await response.json();
-            if (result.status !== 'success') throw new Error(result.message);
-            alert('Transação registrada com sucesso!');
+            let error;
+            if (acao === 'insert') {
+                const { error: insertError } = await supabase.from('transacoes').insert([dados]);
+                error = insertError;
+            } else if (acao === 'updateStatus') {
+                 const { error: updateError } = await supabase.from('transacoes').update({ status: 'Pago' }).eq('id', dados.id);
+                 error = updateError;
+            }
+
+            if (error) throw error;
+
+            alert('Operação realizada com sucesso!');
             if (modalRegistro.style.display !== 'none') modalRegistro.style.display = 'none';
             if (modalPlanejador && modalPlanejador.style.display !== 'none') modalPlanejador.style.display = 'none';
-            setTimeout(() => carregarDadosIniciais(), 1500);
+            
+            carregarDadosIniciais(); // Recarrega os dados para refletir a mudança
         } catch (error) {
-            alert('Erro ao registrar: ' + error.message);
-            if (itemOriginal) { itemOriginal.Status = 'Pendente'; renderizarPlanejador(); }
+            alert('Erro ao salvar no Supabase: ' + error.message);
         } finally {
             if (btnText && btnSpinner) { btnSalvarRegistro.disabled = false; btnText.textContent = 'Salvar'; btnSpinner.style.display = 'none'; }
         }
@@ -252,10 +272,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const tipoFiltro = document.querySelector('#filtro-tipo .active').dataset.tipo;
         const periodoFiltro = document.querySelector('#filtro-periodo .active').dataset.periodo;
         const hoje = new Date();
-        const transacoesVisiveis = transacoesGeral.filter(t => t.Status !== 'Pendente');
+        const transacoesVisiveis = transacoesGeral.filter(t => t.status !== 'Pendente');
+        
         const transacoesAtuaisFiltradas = transacoesVisiveis.filter(t => {
             if (!t || !t.Data) return false;
-            if (tipoFiltro !== 'Todos' && t.Tipo !== tipoFiltro) return false;
+            if (tipoFiltro !== 'Todos' && t.tipo !== tipoFiltro) return false;
             switch(periodoFiltro) {
                 case 'Diario': return dateFns.isSameDay(t.Data, hoje);
                 case 'Semanal': return dateFns.isThisWeek(t.Data, { weekStartsOn: 1 });
@@ -276,8 +297,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function atualizarCards(transacoes) {
-        const receitas = transacoes.filter(t => t.Tipo === 'Receita').reduce((acc, t) => acc + (t.Valor || 0), 0);
-        const despesas = transacoes.filter(t => t.Tipo === 'Despesa').reduce((acc, t) => acc + (t.Valor || 0), 0);
+        const receitas = transacoes.filter(t => t.tipo === 'Receita').reduce((acc, t) => acc + (t.valor || 0), 0);
+        const despesas = transacoes.filter(t => t.tipo === 'Despesa').reduce((acc, t) => acc + (t.valor || 0), 0);
         const saldo = receitas - despesas;
         totalReceitasEl.textContent = formatarMoeda(receitas);
         totalDespesasEl.textContent = formatarMoeda(despesas);
@@ -285,24 +306,26 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderizarPlanejador() {
-        const planejadorItens = transacoesGeral.filter(t => t.Status === 'Pendente');
+        const planejadorItens = transacoesGeral.filter(t => t.status === 'Pendente');
         planejadorItens.sort((a, b) => a.Data - b.Data);
         corpoTabelaPlanejador.innerHTML = '';
         planejadorItens.forEach(item => {
             const tr = document.createElement('tr');
             tr.className = `status-Pendente`;
-            tr.innerHTML = `<td>${formatarData(item.Data)}</td><td>${item.Fonte}</td><td>${formatarMoeda(item.Valor)}</td>
-            <td class="acoes"><button class="btn-icon btn-marcar-pago" data-row-index="${item.rowIndex}" title="Marcar como Pago">✔️</button></td>`;
+            // ALTERADO: de data-row-index para data-id
+            tr.innerHTML = `<td>${formatarData(item.Data)}</td><td>${item.fonte}</td><td>${formatarMoeda(item.valor)}</td>
+            <td class="acoes"><button class="btn-icon btn-marcar-pago" data-id="${item.id}" title="Marcar como Pago">✔️</button></td>`;
             corpoTabelaPlanejador.appendChild(tr);
         });
     }
 
+    // --- FUNÇÕES DE UI E GRÁFICOS (Sem grandes alterações) ---
     function exibirDetalhesModal(tipo) {
-        const transacoesVisiveis = transacoesGeral.filter(t => t.Status !== 'Pendente');
+        const transacoesVisiveis = transacoesGeral.filter(t => t.status !== 'Pendente');
         let transacoesParaExibir = [];
         if (tipo === 'Receita' || tipo === 'Despesa') {
             modalDetalhesTitulo.textContent = `Detalhes de ${tipo}s`;
-            transacoesParaExibir = transacoesVisiveis.filter(t => t.Tipo === tipo);
+            transacoesParaExibir = transacoesVisiveis.filter(t => t.tipo === tipo);
         } else {
             modalDetalhesTitulo.textContent = `Detalhes do Período`;
             transacoesParaExibir = transacoesVisiveis;
@@ -310,7 +333,7 @@ document.addEventListener('DOMContentLoaded', function() {
         transacoesParaExibir.sort((a, b) => b.Data - a.Data);
         let html = '<p style="text-align:center; padding: 20px;">Nenhuma transação encontrada.</p>';
         if (transacoesParaExibir.length > 0) {
-            const tableRows = transacoesParaExibir.map(t => `<tr style="color: ${t.Tipo === 'Receita' ? 'var(--cor-verde)' : 'var(--cor-vermelho)'}"><td>${formatarData(t.Data)}</td><td>${t.Local || '-'}</td><td>${t.Fonte || '-'}</td><td style="text-align:right;">${formatarMoeda(t.Valor)}</td></tr>`).join('');
+            const tableRows = transacoesParaExibir.map(t => `<tr style="color: ${t.tipo === 'Receita' ? 'var(--cor-verde)' : 'var(--cor-vermelho)'}"><td>${formatarData(t.Data)}</td><td>${t.local || '-'}</td><td>${t.fonte || '-'}</td><td style="text-align:right;">${formatarMoeda(t.valor)}</td></tr>`).join('');
             html = `<table class="tabela-contas"><thead><tr><th>Data</th><th>Local</th><th>Fonte</th><th style="text-align:right;">Valor</th></tr></thead><tbody>${tableRows}</tbody></table>`;
         }
         modalDetalhesConteudo.innerHTML = html;
@@ -320,20 +343,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function exportarParaPDF(tipo) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        const transacoesVisiveis = transacoesGeral.filter(t => t.Status !== 'Pendente' && t.Tipo === tipo);
+        const transacoesVisiveis = transacoesGeral.filter(t => t.status !== 'Pendente' && t.tipo === tipo);
         const periodoFiltro = document.querySelector('#filtro-periodo .active').dataset.periodo;
         doc.text(`Relatório de ${tipo}s (${periodoFiltro})`, 10, 10);
-        const tableData = transacoesVisiveis.map(t => [
-            formatarData(t.Data),
-            t.Local || '-',
-            t.Fonte || '-',
-            formatarMoeda(t.Valor)
-        ]);
-        doc.autoTable({
-            head: [['Data', 'Local', 'Fonte', 'Valor']],
-            body: tableData,
-            startY: 20
-        });
+        const tableData = transacoesVisiveis.map(t => [formatarData(t.Data), t.local || '-', t.fonte || '-', formatarMoeda(t.valor)]);
+        doc.autoTable({ head: [['Data', 'Local', 'Fonte', 'Valor']], body: tableData, startY: 20 });
         doc.save(`relatorio-${tipo.toLowerCase()}-${new Date().toISOString().split('T')[0]}.pdf`);
     }
     
@@ -343,11 +357,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (transacoes.length === 0) { graficoLinhas = null; return; }
         const periodoFiltro = document.querySelector('#filtro-periodo .active').dataset.periodo;
         let unit;
-        switch(periodoFiltro) { 
-            case 'Diario': unit = 'hour'; break; 
-            case 'Semanal': case 'Mensal': unit = 'day'; break; 
-            case 'Anual': unit = 'month'; break; 
-        }
+        switch(periodoFiltro) {  case 'Diario': unit = 'hour'; break;  case 'Semanal': case 'Mensal': unit = 'day'; break;  case 'Anual': unit = 'month'; break; }
         const dadosAgrupados = transacoes.reduce((acc, t) => {
             const d = t.Data;
             if (!d || isNaN(d.getTime())) return acc;
@@ -358,74 +368,28 @@ document.addEventListener('DOMContentLoaded', function() {
             else chaveObj = new Date(d.getFullYear(), d.getMonth(), d.getDate());
             const chave = chaveObj.toISOString();
             if (!acc[chave]) acc[chave] = { receitas: 0, despesas: 0 };
-            if (t.Tipo === 'Receita') acc[chave].receitas += (t.Valor || 0);
-            else if (t.Tipo === 'Despesa') acc[chave].despesas += (t.Valor || 0);
+            if (t.tipo === 'Receita') acc[chave].receitas += (t.valor || 0);
+            else if (t.tipo === 'Despesa') acc[chave].despesas += (t.valor || 0);
             return acc;
         }, {});
         const labels = Object.keys(dadosAgrupados).sort((a,b) => new Date(a) - new Date(b));
-        graficoLinhas = new Chart(ctx, { 
-            type: 'line', 
-            data: { 
-                labels: labels, 
-                datasets: [
-                    { 
-                        label: 'Receitas', 
-                        data: labels.map(key => dadosAgrupados[key].receitas), 
-                        borderColor: 'var(--cor-verde)', 
-                        backgroundColor: 'rgba(16, 185, 129, 0.2)', 
-                        fill: true, 
-                        tension: 0.3 
-                    }, 
-                    { 
-                        label: 'Despesas', 
-                        data: labels.map(key => dadosAgrupados[key].despesas), 
-                        borderColor: 'var(--cor-vermelho)', 
-                        backgroundColor: 'rgba(239, 68, 68, 0.2)', 
-                        fill: true, 
-                        tension: 0.3 
-                    }
-                ] 
-            }, 
-            options: { 
-                responsive: true, 
-                scales: { 
-                    x: { type: 'time', time: { unit: unit, tooltipFormat: 'dd/MM/yyyy' } }, 
-                    y: { beginAtZero: true, ticks: { callback: value => formatarMoeda(value) } } 
-                } 
-            } 
-        });
+        graficoLinhas = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [ { label: 'Receitas', data: labels.map(key => dadosAgrupados[key].receitas), borderColor: 'var(--cor-verde)', backgroundColor: 'rgba(16, 185, 129, 0.2)', fill: true, tension: 0.3 }, { label: 'Despesas', data: labels.map(key => dadosAgrupados[key].despesas), borderColor: 'var(--cor-vermelho)', backgroundColor: 'rgba(239, 68, 68, 0.2)', fill: true, tension: 0.3 } ] }, options: { responsive: true, scales: { x: { type: 'time', time: { unit: unit, tooltipFormat: 'dd/MM/yyyy' } }, y: { beginAtZero: true, ticks: { callback: value => formatarMoeda(value) } } } } });
     }
     
     function criarGraficoCategorias(transacoes) {
         const ctx = document.getElementById('grafico-categorias').getContext('2d');
         if (graficoCategorias) graficoCategorias.destroy();
-        const despesas = transacoes.filter(t => t.Tipo === 'Despesa');
+        const despesas = transacoes.filter(t => t.tipo === 'Despesa');
         if (despesas.length === 0) { graficoCategorias = null; return; }
         const dadosAgrupados = despesas.reduce((acc, t) => {
-            const fonte = t.Fonte || 'Não especificado';
+            const fonte = t.fonte || 'Não especificado';
             if (!acc[fonte]) acc[fonte] = 0;
-            acc[fonte] += (t.Valor || 0);
+            acc[fonte] += (t.valor || 0);
             return acc;
         }, {});
         const top10 = Object.entries(dadosAgrupados).sort(([,a],[,b]) => b - a).slice(0, 10);
         document.getElementById('titulo-categorias').textContent = 'Top 10 Despesas por Fonte';
-        graficoCategorias = new Chart(ctx, { 
-            type: 'bar', 
-            data: { 
-                labels: top10.map(([fonte]) => fonte), 
-                datasets: [{ 
-                    label: `Valor Total`, 
-                    data: top10.map(([,valor]) => valor), 
-                    backgroundColor: 'rgba(239, 68, 68, 0.7)' 
-                }] 
-            }, 
-            options: { 
-                indexAxis: 'y', 
-                responsive: true, 
-                plugins: { legend: { display: false } }, 
-                scales: { x: { ticks: { callback: value => formatarMoeda(value) } } } 
-            } 
-        });
+        graficoCategorias = new Chart(ctx, { type: 'bar', data: { labels: top10.map(([fonte]) => fonte), datasets: [{ label: `Valor Total`, data: top10.map(([,valor]) => valor), backgroundColor: 'rgba(239, 68, 68, 0.7)' }] }, options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { callback: value => formatarMoeda(value) } } } } });
     }
 
     function abrirModalRegistro(tipo) {
@@ -476,10 +440,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.body.addEventListener('click', function(e) {
         if (e.target.closest('.btn-marcar-pago')) {
             const btn = e.target.closest('.btn-marcar-pago');
-            const rowIndex = btn.dataset.rowIndex;
-            const itemParaPagar = transacoesGeral.find(t => t.rowIndex == rowIndex);
-            if (itemParaPagar && confirm(`Deseja marcar a despesa "${itemParaPagar.Fonte}" de ${formatarMoeda(itemParaPagar.Valor)} como paga?`)) {
-                submeterDados({ action: 'updateStatus', rowIndex: rowIndex });
+            const transacaoId = btn.dataset.id; // ALTERADO: para data-id
+            const itemParaPagar = transacoesGeral.find(t => t.id == transacaoId);
+            if (itemParaPagar && confirm(`Deseja marcar a despesa "${itemParaPagar.fonte}" de ${formatarMoeda(itemParaPagar.valor)} como paga?`)) {
+                submeterDados({ id: transacaoId }, 'updateStatus');
             }
         }
     });
@@ -488,6 +452,7 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         const valorInput = document.getElementById('reg-valor').value.replace(/\./g, '').replace(',', '.');
         if (isNaN(parseFloat(valorInput))) { alert('Por favor, insira um valor numérico válido.'); return; }
+        // Dados formatados para a tabela 'transacoes'
         const dadosParaEnviar = { 
             data: document.getElementById('reg-data').value, 
             tipo: document.getElementById('reg-tipo').value, 
@@ -497,7 +462,7 @@ document.addEventListener('DOMContentLoaded', function() {
             descricao: '', 
             status: document.getElementById('reg-tipo').value === 'Despesa' ? document.getElementById('reg-status').value : 'Pago' 
         };
-        submeterDados(dadosParaEnviar);
+        submeterDados(dadosParaEnviar, 'insert');
     });
 
     formPlanejador.addEventListener('submit', (e) => {
@@ -513,7 +478,7 @@ document.addEventListener('DOMContentLoaded', function() {
             descricao: '',
             status: 'Pendente'
         };
-        submeterDados(dados);
+        submeterDados(dados, 'insert');
     });
 
     // Tema escuro
