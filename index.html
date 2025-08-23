@@ -17,7 +17,7 @@
         body { font-family: 'Poppins', sans-serif; background-color: var(--cor-fundo); color: var(--cor-texto); margin: 0; padding: 20px; transition: var(--transicao); }
         .container { max-width: 1600px; margin: 0 auto; }
         header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 25px; flex-wrap: wrap; gap: 15px; border-bottom: 1px solid var(--cor-borda); margin-bottom: 25px; }
-        .header-title { display: flex; align-items: center; gap: 15px; }
+        .header-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .header-actions { display: flex; align-items: center; gap: 15px; }
         header h1 { margin: 0; font-size: 2em; }
         .btn { padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: var(--transicao); font-weight: 500; border: none; cursor: pointer; }
@@ -80,8 +80,12 @@
         <header>
             <div class="header-title">
                 <h1>Dashboard Financeiro</h1>
-                <button class="btn-icon" id="btn-export-receitas" title="Exportar Relatório de Receitas"><i class="fa-solid fa-file-pdf"></i></button>
-                <button class="btn-icon" id="btn-export-despesas" title="Exportar Relatório de Despesas"><i class="fa-solid fa-file-invoice-dollar"></i></button>
+                <div class="grupo-botoes-export">
+                    <button class="btn-icon" id="btn-export-pdf-receitas" title="Exportar PDF de Receitas"><i class="fa-solid fa-file-pdf"></i></button>
+                    <button class="btn-icon" id="btn-export-csv-receitas" title="Exportar CSV de Receitas"><i class="fa-solid fa-file-csv"></i></button>
+                    <button class="btn-icon" id="btn-export-pdf-despesas" title="Exportar PDF de Despesas"><i class="fa-solid fa-file-invoice-dollar"></i></button>
+                    <button class="btn-icon" id="btn-export-csv-despesas" title="Exportar CSV de Despesas"><i class="fa-solid fa-file-csv"></i></button>
+                </div>
                 <button class="btn-icon" id="btn-refresh" title="Recarregar Dados"><i class="fa-solid fa-sync-alt"></i></button>
             </div>
             <div class="header-actions">
@@ -127,7 +131,6 @@
             <div id="modal-detalhes-conteudo" class="modal-body"></div>
         </div>
     </div>
-
     <div id="modal-registro" class="modal-container">
         <div class="modal-content">
             <div class="modal-header"><h2 id="modal-registro-titulo">Registrar</h2><button id="btn-fechar-registro" class="btn-icon">&times;</button></div>
@@ -148,7 +151,6 @@
             </div>
         </div>
     </div>
-
     <div id="modal-planejador" class="modal-container">
         <div class="modal-content">
             <div class="modal-header"><h2 id="modal-planejador-titulo">Adicionar Conta a Pagar</h2><button id="btn-fechar-planejador" class="btn-icon">&times;</button></div>
@@ -182,9 +184,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- DADOS LOCAIS (Para sugestões) ---
     const locais = ["Panevie", "Buono Trigo Industria", "Casa"];
     const fontesReceita = ["Cartão Panevie", "Cartão Industria", "Cartão Buono Trigo", "Madrugada", "Outra"];
-    const fontesDespesa = ["Água","Aluguel","Arrendamento padaria","Amora","Casa Garcia","Combustível Fiorino","Combustível Jumper","Comercial Mab","Confraternização","Contadora","DAS","Despesas Cartão","Doações Instituições","Diarista Lucélia","Energia","FGTS","Financiamento Solar","Forn Água","Forn Armazem","Forn ASSAI","FORN BEIJU","FORN BETANIA","FORN BOLACHA FOL","FORN BOMBONIERE","FORN BUNGE","FORN CASTANHA","FORN CACHOEIRA","FORN COCO","FORN EMBALAGENS","FORN ELMA CHIPS","FORN ESTRELA (FARINHA)","FORN FARMÁCIA","FORN FORPAN","FORN FRIGORIFICO","FORN FRIOS INDUSTRIA","FORN FRIOS PANEVIE","FORN GÁS","FORN ISIS","FORN JANDAIA","FORN LINDENBERG","FORN M. DIAS BRANCO","FORN MERC ADRIEL","FORN MILFRIOS","FORN DE OVOS","FORN OMEGA","FORN PADEIRÃO","FORN PAMONHA","FORN PÃO DE QUEIJO","FORN PEPSICO","FORN PRODUTOS DE LIMPEZA","FORN REFRI","FORN ROYAL","FORN SOLMAR","FORN SR RICARDO","FORN TEMP BOLOS","FORN TAPIOCA LEONARDO","FORN TAPIOCA ZEZO","INSS","INTERNET","PARCELAMENTO RECEITA FEDERAL","DESPESAS MOTO","PONTO DAS REFRIGERAÇÕES","MANUTENÇÃO FIORINO","MANUTENÇÃO PADARIA","PRESTAÇÃO FURGÃO","RP CONSULTORIA","SALÁRIO MICHELE","SALÁRIO ANGELA","SALÁRIO JULIANA","SALÁRIO RAIMUNDO","SALÁRIO CARLOS","SALÁRIO GABRIEL","SALÁRIO LUCIO","SALÁRIO LUCIENE","SALÁRIO ALINE","SALÁRIO ZÉ","SEGURO BRADESCO","SEGURO PREDIAL","SINDPAN","SISTEMA","TAXA BANCÁRIA","SIMPLES NACIONAL","DIARISTA","EMBALAGEM PAPAI","ENERGIA SOLAR","FORN. QUEIJO","MAQUINÁRIO CETRO","MAQUINÁRIO ITAIYMAC","MAQUILAR","SALÁRIO LUANA","SALÁRIO PAULO","SALÁRIO D. BRANca","TIM","MARFRIOS","SALÁRIO SOCORRO","ESPORTE JÚLIA","CAGECE","CARTÃO EXTRA","CARTÃO BRADESCO","CARTÃO ITAÚ","COLÉGIO JULIA","CONSÓRCIO","ECC PARACURU","FIES LUCIO","FIES MARINA","IGREJA","JANETE","LAZER FAMÍLIA","LUZ","MANUTENÇÃO CARRO","REFORÇO JÚLIA","MERCANTIL","PLANO DE SAÚDE","PRESTAÇÃO CASA","COMBUSTIVEL","CARRO","TELEFONE","TV A CABO","CASA CCF","Outra"];
+    const fontesDespesa = ["Água","Aluguel","Arrendamento padaria","Amora","Casa Garcia","Combustível Fiorino","Combustível Jumper","Comercial Mab","Confraternização","Contadora","DAS","Despesas Cartão","Doações Instituições","Diarista Lucélia","Energia","FGTS","Financiamento Solar","Forn Água","Forn Armazem","Forn ASSAI","FORN BEIJU","FORN BETANIA","FORN BOLACHA FOL","FORN BOMBONIERE","FORN BUNGE","FORN CASTANHA","FORN CACHOEIRA","FORN COCO","FORN EMBALAGENS","FORN ELMA CHIPS","FORN ESTRELA (FARINHA)","FORN FARMÁCIA","FORN FORPAN","FORN FRIGORIFICO","FORN FRIOS INDUSTRIA","FORN FRIOS PANEVIE","FORN GÁS","FORN ISIS","FORN JANDAIA","FORN LINDENBERG","FORN M. DIAS BRANCO","FORN MERC ADRIEL","FORN MILFRIOS","FORN DE OVOS","FORN OMEGA","FORN PADEIRÃO","FORN PAMONHA","FORN PÃO DE QUEIJO","FORN PEPSICO","FORN PRODUTOS DE LIMPEZA","FORN REFRI","FORN ROYAL","FORN SOLMAR","FORN SR RICARDO","FORN TEMP BOLOS","FORN TAPIOCA LEONARDO","FORN TAPIOCA ZEZO","INSS","INTERNET","PARCELAMENTO RECEITA FEDERAL","DESPESAS MOTO","PONTO DAS REFRIGERAÇÕES","MANUTENÇÃO FIORINO","MANUTENÇÃO PADARIA","PRESTAÇÃO FURGÃO","RP CONSULTORIA","SALÁRIO MICHELE","SALÁRIO ANGELA","SALÁRIO JULIANA","SALÁRIO RAIMUNDO","SALÁRIO CARLOS","SALÁRIO GABRIEL","SALÁRIO LUCIO","SALÁRIO LUCIENE","SALÁRIO ALINE","SALÁRIO ZÉ","SEGURO BRADESCO","SEGURO PREDIAL","SINDPAN","SISTEMA","TAXA BANCÁRIA","SIMPLES NACIONAL","DIARISTA","EMBALAGEM PAPAI","ENERGIA SOLAR","FORN. QUEIJO","MAQUINÁRIO CETRO","MAQUINÁRIO ITAIYMAC","MAQUILAR","SALÁRIO LUANA","SALÁRIO PAULO","SALÁRIO D. BRANCA","TIM","MARFRIOS","SALÁRIO SOCORRO","ESPORTE JÚLIA","CAGECE","CARTÃO EXTRA","CARTÃO BRADESCO","CARTÃO ITAÚ","COLÉGIO JULIA","CONSÓRCIO","ECC PARACURU","FIES LUCIO","FIES MARINA","IGREJA","JANETE","LAZER FAMÍLIA","LUZ","MANUTENÇÃO CARRO","REFORÇO JÚLIA","MERCANTIL","PLANO DE SAÚDE","PRESTAÇÃO CASA","COMBUSTIVEL","CARRO","TELEFONE","TV A CABO","CASA CCF","Outra"];
     
+    // --- VARIÁVEIS GLOBAIS ---
     let transacoesGeral = [];
+    let transacoesFiltradas = []; // << NOVO: Guarda os dados que estão visíveis na tela
     let graficoLinhas = null;
     let graficoCategorias = null;
 
@@ -214,8 +218,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnSalvarRegistro = document.getElementById('btn-salvar-registro');
     const datalistLocais = document.getElementById('datalist-locais');
     const datalistFontes = document.getElementById('datalist-fontes');
-    const btnExportReceitas = document.getElementById('btn-export-receitas');
-    const btnExportDespesas = document.getElementById('btn-export-despesas');
+    const btnExportPdfReceitas = document.getElementById('btn-export-pdf-receitas');
+    const btnExportCsvReceitas = document.getElementById('btn-export-csv-receitas');
+    const btnExportPdfDespesas = document.getElementById('btn-export-pdf-despesas');
+    const btnExportCsvDespesas = document.getElementById('btn-export-csv-despesas');
     const modalPlanejador = document.getElementById('modal-planejador');
     const btnAbrirModalPlanejador = document.getElementById('btn-abrir-modal-planejador');
     const btnFecharPlanejador = document.getElementById('btn-fechar-planejador');
@@ -239,6 +245,80 @@ document.addEventListener('DOMContentLoaded', function() {
         toastContainer.appendChild(toast);
         setTimeout(() => toast.remove(), 4000);
     }
+    
+    function obterDescricaoFiltro() {
+        const periodoBtn = document.querySelector('#filtro-periodo .active');
+        if (periodoBtn) {
+            return `(${periodoBtn.textContent})`;
+        }
+        if (dataInicioInput.value && dataFimInput.value) {
+            const inicio = new Date(`${dataInicioInput.value}T00:00:00`).toLocaleDateString('pt-BR');
+            const fim = new Date(`${dataFimInput.value}T00:00:00`).toLocaleDateString('pt-BR');
+            return `(de ${inicio} a ${fim})`;
+        }
+        return '(Todos os Períodos)';
+    }
+
+    // --- FUNÇÕES DE EXPORTAÇÃO (CORRIGIDO E NOVO) ---
+    function exportarParaPDF(tipo) {
+        const dadosParaExportar = transacoesFiltradas.filter(t => t.tipo === tipo);
+        if (dadosParaExportar.length === 0) {
+            showToast(`Nenhuma ${tipo.toLowerCase()} para exportar no período selecionado.`, 'error');
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const descricaoFiltro = obterDescricaoFiltro();
+        
+        doc.text(`Relatório de ${tipo}s ${descricaoFiltro}`, 14, 15);
+
+        const tableData = dadosParaExportar.map(t => [
+            formatarData(t.Data),
+            t.local || '-',
+            t.fonte || '-',
+            formatarMoeda(t.valor)
+        ]);
+        
+        doc.autoTable({
+            head: [['Data', 'Local', 'Fonte', 'Valor']],
+            body: tableData,
+            startY: 25
+        });
+        
+        doc.save(`relatorio-${tipo.toLowerCase()}-${new Date().toISOString().split('T')[0]}.pdf`);
+    }
+
+    function exportarParaCSV(tipo) {
+        const dadosParaExportar = transacoesFiltradas.filter(t => t.tipo === tipo);
+        if (dadosParaExportar.length === 0) {
+            showToast(`Nenhuma ${tipo.toLowerCase()} para exportar no período selecionado.`, 'error');
+            return;
+        }
+
+        const headers = ['Data', 'Local', 'Fonte', 'Valor'];
+        let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
+
+        dadosParaExportar.forEach(t => {
+            const valorNumerico = (t.valor || 0).toFixed(2).replace('.', ',');
+            const row = [
+                formatarData(t.Data),
+                `"${t.local || '-'}"`,
+                `"${t.fonte || '-'}"`,
+                `"${valorNumerico}"`
+            ];
+            csvContent += row.join(",") + "\n";
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `relatorio-${tipo.toLowerCase()}-${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
 
     // --- FUNÇÕES PRINCIPAIS (COM SUPABASE) ---
     async function carregarDadosIniciais() {
@@ -273,10 +353,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
             let error;
-            if (id) { // Modo de Edição
+            if (id) {
                 const { error: updateError } = await supabase.from('transacoes').update(dados).eq('id', id);
                 error = updateError;
-            } else { // Modo de Criação
+            } else {
                 const { error: insertError } = await supabase.from('transacoes').insert([dados]);
                 error = insertError;
             }
@@ -307,21 +387,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const tipoFiltro = document.querySelector('#filtro-tipo .active').dataset.tipo;
         const periodoFiltroBtn = document.querySelector('#filtro-periodo .active');
         const periodoFiltro = periodoFiltroBtn ? periodoFiltroBtn.dataset.periodo : null;
-        
         const dataInicio = dataInicioInput.value ? new Date(`${dataInicioInput.value}T00:00:00`) : null;
         const dataFim = dataFimInput.value ? new Date(`${dataFimInput.value}T23:59:59`) : null;
-
         const hoje = new Date();
+
         const transacoesVisiveis = transacoesGeral.filter(t => t.status !== 'Pendente');
         
-        const transacoesAtuaisFiltradas = transacoesVisiveis.filter(t => {
+        transacoesFiltradas = transacoesVisiveis.filter(t => { // << ATUALIZA A VARIÁVEL GLOBAL
             if (!t || !t.Data) return false;
             if (tipoFiltro !== 'Todos' && t.tipo !== tipoFiltro) return false;
             
-            // Lógica de filtro por data
-            if (dataInicio && dataFim) { // Filtro personalizado ativo
+            if (dataInicio && dataFim) {
                 return t.Data >= dataInicio && t.Data <= dataFim;
-            } else if(periodoFiltro) { // Filtros pré-definidos
+            } else if(periodoFiltro) {
                 switch(periodoFiltro) {
                     case 'Diario': return dateFns.isSameDay(t.Data, hoje);
                     case 'Semanal': return dateFns.isThisWeek(t.Data, { weekStartsOn: 1 });
@@ -330,20 +408,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     default: return true;
                 }
             }
-            return true; // Se nenhum filtro de data estiver ativo
+            return true;
         });
 
-        document.getElementById('titulo-grafico').textContent = `Evolução Financeira`;
-        atualizarDashboard(transacoesAtuaisFiltradas);
+        document.getElementById('titulo-grafico').textContent = `Evolução Financeira ${obterDescricaoFiltro()}`;
+        atualizarDashboard(transacoesFiltradas);
         renderizarPlanejador();
     }
     
+    // As funções que não mudaram (atualizarDashboard, cards, etc.) continuam aqui...
     function atualizarDashboard(transacoes) {
         atualizarCards(transacoes);
         criarGraficoLinhas(transacoes);
         criarGraficoCategorias(transacoes);
     }
-
     function atualizarCards(transacoes) {
         const receitas = transacoes.filter(t => t.tipo === 'Receita').reduce((acc, t) => acc + (t.valor || 0), 0);
         const despesas = transacoes.filter(t => t.tipo === 'Despesa').reduce((acc, t) => acc + (t.valor || 0), 0);
@@ -352,7 +430,6 @@ document.addEventListener('DOMContentLoaded', function() {
         totalDespesasEl.textContent = formatarMoeda(despesas);
         saldoTotalEl.textContent = formatarMoeda(saldo);
     }
-
     function renderizarPlanejador() {
         const planejadorItens = transacoesGeral.filter(t => t.status === 'Pendente');
         planejadorItens.sort((a, b) => a.Data - b.Data);
@@ -369,23 +446,14 @@ document.addEventListener('DOMContentLoaded', function() {
             corpoTabelaPlanejador.appendChild(tr);
         });
     }
-
     function exibirDetalhesModal(tipo) {
-        // ... (código existente sem alteração, exceto pelos botões de ação)
-        const transacoesVisiveis = transacoesGeral.filter(t => t.status !== 'Pendente');
-        let transacoesParaExibir = [];
-        let titulo = '';
-        if (tipo === 'Receita' || tipo === 'Despesa') {
-            titulo = `Detalhes de ${tipo}s`;
-            transacoesParaExibir = transacoesVisiveis.filter(t => t.tipo === tipo);
-        } else {
-            titulo = `Detalhes do Saldo`;
-            transacoesParaExibir = transacoesVisiveis;
-        }
+        const transacoesParaExibir = transacoesFiltradas.filter(t => {
+            if (tipo === 'Receita' || tipo === 'Despesa') return t.tipo === tipo;
+            return true; // para 'Saldo'
+        });
         
-        const periodoBtn = document.querySelector('#filtro-periodo .active');
-        const periodo = periodoBtn ? `(${periodoBtn.dataset.periodo})` : '(Período Personalizado)';
-        modalDetalhesTitulo.textContent = `${titulo} ${periodo}`;
+        let titulo = tipo === 'Saldo' ? 'Detalhes do Saldo' : `Detalhes de ${tipo}s`;
+        modalDetalhesTitulo.textContent = `${titulo} ${obterDescricaoFiltro()}`;
 
         transacoesParaExibir.sort((a, b) => b.Data - a.Data);
         let html = '<p style="text-align:center; padding: 20px;">Nenhuma transação encontrada.</p>';
@@ -401,12 +469,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         <button class="btn-icon btn-delete" data-id="${t.id}" title="Excluir"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 </tr>`).join('');
-            html = `<table class="tabela-contas"><thead><tr><th>Data</th><th>Local</th><th>Fonte</th><th style="text-align:right;">Valor</th><th>Ações</th></tr></thead><tbody>${tableRows}</tbody></table>`;
+            html = `<div class="tabela-contas-wrapper"><table class="tabela-contas"><thead><tr><th>Data</th><th>Local</th><th>Fonte</th><th style="text-align:right;">Valor</th><th>Ações</th></tr></thead><tbody>${tableRows}</tbody></table></div>`;
         }
         modalDetalhesConteudo.innerHTML = html;
         modalDetalhes.style.display = 'flex';
     }
-
     function abrirModalRegistro(tipo, id = null) {
         formRegistro.reset();
         document.getElementById('reg-id').value = id || '';
@@ -414,7 +481,7 @@ document.addEventListener('DOMContentLoaded', function() {
         popularDatalist(datalistLocais, locais);
         const grupoStatus = document.getElementById('grupo-status');
         
-        if (id) { // Modo Edição
+        if (id) {
             const transacao = transacoesGeral.find(t => t.id === id);
             if (!transacao) return;
             modalRegistroTitulo.textContent = 'Editar Transação';
@@ -423,7 +490,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('reg-fonte').value = transacao.fonte;
             document.getElementById('reg-valor').value = (transacao.valor || 0).toFixed(2).replace('.', ',');
             document.getElementById('reg-status').value = transacao.status;
-        } else { // Modo Criação
+        } else {
             document.getElementById('reg-data').valueAsDate = new Date();
         }
 
@@ -440,102 +507,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         modalRegistro.style.display = 'flex';
     }
-
-    // --- EVENT LISTENERS ---
-    
-    // Filtros
-    document.getElementById('filtro-tipo').addEventListener('click', (e) => {
-        if (e.target.tagName === 'BUTTON') {
-            document.querySelectorAll('#filtro-tipo .btn-filtro').forEach(btn => btn.classList.remove('active'));
-            e.target.classList.add('active');
-            aplicarFiltros();
-        }
-    });
-
-    document.getElementById('filtro-periodo').addEventListener('click', (e) => {
-        if (e.target.tagName === 'BUTTON') {
-            document.querySelectorAll('#filtro-periodo .btn-filtro').forEach(btn => btn.classList.remove('active'));
-            e.target.classList.add('active');
-            // Limpa o filtro personalizado ao usar um botão de período
-            dataInicioInput.value = '';
-            dataFimInput.value = '';
-            aplicarFiltros();
-        }
-    });
-
-    btnAplicarFiltroData.addEventListener('click', () => {
-        if(dataInicioInput.value && dataFimInput.value) {
-            document.querySelectorAll('#filtro-periodo .btn-filtro').forEach(btn => btn.classList.remove('active'));
-            aplicarFiltros();
-        } else {
-            showToast('Por favor, selecione data de início e fim.', 'error');
-        }
-    });
-    
-    // Ações globais (Editar, Excluir, Marcar como Pago)
-    document.body.addEventListener('click', function(e) {
-        const btnDelete = e.target.closest('.btn-delete');
-        if (btnDelete) {
-            const transacaoId = parseInt(btnDelete.dataset.id);
-            const transacao = transacoesGeral.find(t => t.id === transacaoId);
-            if (transacao && confirm(`Tem certeza que deseja excluir a transação "${transacao.fonte}" de ${formatarMoeda(transacao.valor)}?`)) {
-                excluirTransacao(transacaoId);
-            }
-        }
-        
-        const btnEdit = e.target.closest('.btn-edit');
-        if (btnEdit) {
-            const transacaoId = parseInt(btnEdit.dataset.id);
-            const transacao = transacoesGeral.find(t => t.id === transacaoId);
-            if(transacao) abrirModalRegistro(transacao.tipo, transacaoId);
-        }
-
-        const btnMarcarPago = e.target.closest('.btn-marcar-pago');
-        if (btnMarcarPago) {
-            const transacaoId = parseInt(btnMarcarPago.dataset.id);
-            const item = transacoesGeral.find(t => t.id === transacaoId);
-            if(item && confirm(`Marcar a despesa "${item.fonte}" de ${formatarMoeda(item.valor)} como paga?`)) {
-                 supabase.from('transacoes').update({ status: 'Pago' }).eq('id', transacaoId).then(({error}) => {
-                     if(error) showToast(error.message, 'error');
-                     else {
-                         showToast('Conta marcada como paga!');
-                         carregarDadosIniciais();
-                     }
-                 });
-            }
-        }
-    });
-    
-    // Formulário principal
-    formRegistro.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const id = document.getElementById('reg-id').value;
-        const valorInput = document.getElementById('reg-valor').value.replace(/\./g, '').replace(',', '.');
-        if (isNaN(parseFloat(valorInput))) { showToast('Por favor, insira um valor numérico válido.', 'error'); return; }
-        
-        const dadosParaEnviar = { 
-            data: document.getElementById('reg-data').value, 
-            tipo: document.getElementById('reg-tipo').value, 
-            valor: parseFloat(valorInput), 
-            fonte: document.getElementById('reg-fonte').value, 
-            local: document.getElementById('reg-local').value, 
-            status: document.getElementById('reg-tipo').value === 'Despesa' ? document.getElementById('reg-status').value : 'Pago' 
-        };
-        submeterDados(dadosParaEnviar, id ? parseInt(id) : null);
-    });
-    
-    // Outros botões e modais
-    btnRefresh.addEventListener('click', carregarDadosIniciais);
-    cardReceitas.addEventListener('click', () => exibirDetalhesModal('Receita'));
-    cardDespesas.addEventListener('click', () => exibirDetalhesModal('Despesa'));
-    cardSaldo.addEventListener('click', () => exibirDetalhesModal('Saldo'));
-    btnFecharDetalhes.addEventListener('click', () => modalDetalhes.style.display = 'none');
-    btnAbrirModalReceita.addEventListener('click', () => abrirModalRegistro('Receita'));
-    btnAbrirModalDespesa.addEventListener('click', () => abrirModalRegistro('Despesa'));
-    btnFecharRegistro.addEventListener('click', () => modalRegistro.style.display = 'none');
-    btnCancelarRegistro.addEventListener('click', () => modalRegistro.style.display = 'none');
-    // (O restante do código, como gráficos e tema, permanece o mesmo)
-
     function criarGraficoLinhas(transacoes) {
         const ctx = document.getElementById('grafico-linhas').getContext('2d');
         if (graficoLinhas) graficoLinhas.destroy();
@@ -563,7 +534,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const labels = Object.keys(dadosAgrupados).sort((a,b) => new Date(a) - new Date(b));
         graficoLinhas = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [ { label: 'Receitas', data: labels.map(key => dadosAgrupados[key].receitas), borderColor: 'var(--cor-verde)', backgroundColor: 'rgba(16, 185, 129, 0.2)', fill: true, tension: 0.3 }, { label: 'Despesas', data: labels.map(key => dadosAgrupados[key].despesas), borderColor: 'var(--cor-vermelho)', backgroundColor: 'rgba(239, 68, 68, 0.2)', fill: true, tension: 0.3 } ] }, options: { responsive: true, scales: { x: { type: 'time', time: { unit: unit, tooltipFormat: 'dd/MM/yyyy' } }, y: { beginAtZero: true, ticks: { callback: value => formatarMoeda(value) } } } } });
     }
-    
     function criarGraficoCategorias(transacoes) {
         const ctx = document.getElementById('grafico-categorias').getContext('2d');
         if (graficoCategorias) graficoCategorias.destroy();
@@ -579,16 +549,38 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('titulo-categorias').textContent = 'Top 10 Despesas por Fonte';
         graficoCategorias = new Chart(ctx, { type: 'bar', data: { labels: top10.map(([fonte]) => fonte), datasets: [{ label: `Valor Total`, data: top10.map(([,valor]) => valor), backgroundColor: 'rgba(239, 68, 68, 0.7)' }] }, options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { callback: value => formatarMoeda(value) } } } } });
     }
-    
     function aplicarTema(tema) {
         document.body.classList.toggle('dark-mode', tema === 'dark');
         btnToggleTheme.innerHTML = tema === 'dark' ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
     }
-    btnToggleTheme.addEventListener('click', () => {
-        const temaAtual = document.body.classList.contains('dark-mode') ? 'light' : 'dark';
-        localStorage.setItem('temaDashboard', temaAtual);
-        aplicarTema(temaAtual);
+
+    // --- EVENT LISTENERS ---
+    btnToggleTheme.addEventListener('click', () => { const temaAtual = document.body.classList.contains('dark-mode') ? 'light' : 'dark'; localStorage.setItem('temaDashboard', temaAtual); aplicarTema(temaAtual); });
+    document.getElementById('filtro-tipo').addEventListener('click', (e) => { if (e.target.tagName === 'BUTTON') { document.querySelectorAll('#filtro-tipo .btn-filtro').forEach(btn => btn.classList.remove('active')); e.target.classList.add('active'); aplicarFiltros(); } });
+    document.getElementById('filtro-periodo').addEventListener('click', (e) => { if (e.target.tagName === 'BUTTON') { document.querySelectorAll('#filtro-periodo .btn-filtro').forEach(btn => btn.classList.remove('active')); e.target.classList.add('active'); dataInicioInput.value = ''; dataFimInput.value = ''; aplicarFiltros(); } });
+    btnAplicarFiltroData.addEventListener('click', () => { if(dataInicioInput.value && dataFimInput.value) { document.querySelectorAll('#filtro-periodo .btn-filtro').forEach(btn => btn.classList.remove('active')); aplicarFiltros(); } else { showToast('Por favor, selecione data de início e fim.', 'error'); } });
+    document.body.addEventListener('click', function(e) {
+        const btnDelete = e.target.closest('.btn-delete');
+        if (btnDelete) { const transacaoId = parseInt(btnDelete.dataset.id); const transacao = transacoesGeral.find(t => t.id === transacaoId); if (transacao && confirm(`Tem certeza que deseja excluir a transação "${transacao.fonte}" de ${formatarMoeda(transacao.valor)}?`)) { excluirTransacao(transacaoId); } }
+        const btnEdit = e.target.closest('.btn-edit');
+        if (btnEdit) { const transacaoId = parseInt(btnEdit.dataset.id); const transacao = transacoesGeral.find(t => t.id === transacaoId); if(transacao) abrirModalRegistro(transacao.tipo, transacaoId); }
+        const btnMarcarPago = e.target.closest('.btn-marcar-pago');
+        if (btnMarcarPago) { const transacaoId = parseInt(btnMarcarPago.dataset.id); const item = transacoesGeral.find(t => t.id === transacaoId); if(item && confirm(`Marcar a despesa "${item.fonte}" de ${formatarMoeda(item.valor)} como paga?`)) { supabase.from('transacoes').update({ status: 'Pago' }).eq('id', transacaoId).then(({error}) => { if(error) showToast(error.message, 'error'); else { showToast('Conta marcada como paga!'); carregarDadosIniciais(); } }); } }
     });
+    formRegistro.addEventListener('submit', (e) => { e.preventDefault(); const id = document.getElementById('reg-id').value; const valorInput = document.getElementById('reg-valor').value.replace(/\./g, '').replace(',', '.'); if (isNaN(parseFloat(valorInput))) { showToast('Por favor, insira um valor numérico válido.', 'error'); return; } const dadosParaEnviar = { data: document.getElementById('reg-data').value, tipo: document.getElementById('reg-tipo').value, valor: parseFloat(valorInput), fonte: document.getElementById('reg-fonte').value, local: document.getElementById('reg-local').value, status: document.getElementById('reg-tipo').value === 'Despesa' ? document.getElementById('reg-status').value : 'Pago' }; submeterDados(dadosParaEnviar, id ? parseInt(id) : null); });
+    btnRefresh.addEventListener('click', carregarDadosIniciais);
+    cardReceitas.addEventListener('click', () => exibirDetalhesModal('Receita'));
+    cardDespesas.addEventListener('click', () => exibirDetalhesModal('Despesa'));
+    cardSaldo.addEventListener('click', () => exibirDetalhesModal('Saldo'));
+    btnFecharDetalhes.addEventListener('click', () => modalDetalhes.style.display = 'none');
+    btnAbrirModalReceita.addEventListener('click', () => abrirModalRegistro('Receita'));
+    btnAbrirModalDespesa.addEventListener('click', () => abrirModalRegistro('Despesa'));
+    btnFecharRegistro.addEventListener('click', () => modalRegistro.style.display = 'none');
+    btnCancelarRegistro.addEventListener('click', () => modalRegistro.style.display = 'none');
+    btnExportPdfReceitas.addEventListener('click', () => exportarParaPDF('Receita'));
+    btnExportCsvReceitas.addEventListener('click', () => exportarParaCSV('Receita'));
+    btnExportPdfDespesas.addEventListener('click', () => exportarParaPDF('Despesa'));
+    btnExportCsvDespesas.addEventListener('click', () => exportarParaCSV('Despesa'));
     
     // --- INICIALIZAÇÃO ---
     aplicarTema(localStorage.getItem('temaDashboard') || 'light');
