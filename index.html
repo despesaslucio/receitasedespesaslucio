@@ -182,7 +182,6 @@
             box-shadow: var(--sombra-card);
             border: 1px solid var(--cor-borda);
             position: relative;
-            min-height: 200px; /* Evita que o widget colapse ao mostrar a msg de vazio */
         }
         .widget h2 {
             margin-top: 0;
@@ -190,6 +189,13 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        /* --- CONTÊINER DOS GRÁFICOS (NOVO) --- */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 400px; 
         }
 
         /* --- FILTROS --- */
@@ -372,7 +378,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 200px; /* Mesma altura do widget */
+            min-height: 200px;
             text-align: center;
             color: var(--cor-texto-leve);
             font-size: 1.2em;
@@ -411,6 +417,11 @@
                 align-items: stretch;
             }
 
+            /* Altura dos gráficos em telas menores */
+            .chart-container {
+                height: 300px;
+            }
+
             /* Tabela Responsiva */
             .tabela-contas thead { display: none; }
             .tabela-contas tr {
@@ -426,17 +437,17 @@
                 align-items: center;
                 padding: 8px 0;
                 border: none;
-                text-align: right; /* Alinha o conteúdo à direita */
+                text-align: right;
             }
             .tabela-contas td::before {
                 content: attr(data-label);
                 font-weight: bold;
-                text-align: left; /* Alinha o rótulo à esquerda */
+                text-align: left;
                 color: var(--cor-texto);
                 margin-right: 10px;
             }
             .tabela-contas td.acoes {
-                justify-content: flex-end; /* Ações sempre no final */
+                justify-content: flex-end;
                 padding-top: 10px;
             }
             .tabela-contas td.acoes::before { display: none; }
@@ -491,12 +502,16 @@
                 <section class="grid-principal">
                     <div class="widget">
                         <h2 id="titulo-grafico">Evolução Financeira</h2>
-                        <canvas id="grafico-linhas"></canvas>
+                        <div class="chart-container" id="grafico-linhas-container">
+                            <canvas id="grafico-linhas"></canvas>
+                        </div>
                         <div id="grafico-linhas-vazio" class="empty-state"><p><i class="fa-solid fa-chart-line"></i><br>Sem dados para exibir.</p></div>
                     </div>
                     <div class="widget">
                         <h2 id="titulo-categorias">Top 10 Despesas por Fonte</h2>
-                        <canvas id="grafico-categorias"></canvas>
+                        <div class="chart-container" id="grafico-categorias-container">
+                             <canvas id="grafico-categorias"></canvas>
+                        </div>
                         <div id="grafico-categorias-vazio" class="empty-state"><p><i class="fa-solid fa-chart-pie"></i><br>Nenhuma despesa registrada.</p></div>
                     </div>
                     <div class="widget" style="grid-column: 1 / -1;">
@@ -766,18 +781,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function criarGraficoLinhas(transacoes) {
-        const canvas = document.getElementById('grafico-linhas');
+        const container = document.getElementById('grafico-linhas-container');
         const emptyState = document.getElementById('grafico-linhas-vazio');
         if (graficoLinhas) graficoLinhas.destroy();
+        
         if (transacoes.length === 0) {
-            canvas.style.display = 'none';
+            container.style.display = 'none';
             emptyState.style.display = 'flex';
             return;
         }
-        canvas.style.display = 'block';
+        container.style.display = 'block';
         emptyState.style.display = 'none';
 
-        const ctx = canvas.getContext('2d');
+        const ctx = document.getElementById('grafico-linhas').getContext('2d');
         const periodoFiltroBtn = document.querySelector('#filtro-periodo .active');
         let unit = 'day';
         if (periodoFiltroBtn) {
@@ -803,19 +819,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function criarGraficoCategorias(transacoes) {
-        const canvas = document.getElementById('grafico-categorias');
+        const container = document.getElementById('grafico-categorias-container');
         const emptyState = document.getElementById('grafico-categorias-vazio');
         if (graficoCategorias) graficoCategorias.destroy();
         const despesas = transacoes.filter(t => t.tipo === 'Despesa');
+
         if (despesas.length === 0) {
-            canvas.style.display = 'none';
+            container.style.display = 'none';
             emptyState.style.display = 'flex';
             return;
         }
-        canvas.style.display = 'block';
+        container.style.display = 'block';
         emptyState.style.display = 'none';
 
-        const ctx = canvas.getContext('2d');
+        const ctx = document.getElementById('grafico-categorias').getContext('2d');
         const dadosAgrupados = despesas.reduce((acc, t) => {
             const fonte = t.fonte || 'Não especificado';
             if (!acc[fonte]) acc[fonte] = 0;
