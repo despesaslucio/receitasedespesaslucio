@@ -12,66 +12,467 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --cor-fundo: #f0f2f5; --cor-texto: #363f5f; --cor-texto-leve: #969cb3; --cor-card: #ffffff; --cor-borda: #e2e8f0; --cor-verde: #10b981; --cor-vermelho: #ef4444; --cor-azul: #3b82f6; --cor-amarelo-fundo: #fef9c3; --cor-amarelo-texto: #a16207; --sombra-card: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); --transicao: all 0.3s ease-in-out; }
-        body.dark-mode { --cor-fundo: #1a202c; --cor-texto: #e2e8f0; --cor-texto-leve: #a0aec0; --cor-card: #2d3748; --cor-borda: #4a5568; --cor-amarelo-fundo: #4a4a28; --cor-amarelo-texto: #fef08a;}
-        body { font-family: 'Poppins', sans-serif; background-color: var(--cor-fundo); color: var(--cor-texto); margin: 0; padding: 20px; transition: var(--transicao); }
-        .container { max-width: 1600px; margin: 0 auto; }
-        header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 25px; flex-wrap: wrap; gap: 15px; border-bottom: 1px solid var(--cor-borda); margin-bottom: 25px; }
-        .header-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .header-actions { display: flex; align-items: center; gap: 15px; }
-        header h1 { margin: 0; font-size: 2em; }
-        .btn { padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: var(--transicao); font-weight: 500; border: none; cursor: pointer; }
-        .btn-verde { background-color: var(--cor-verde); color: white; }
-        .btn-vermelho { background-color: var(--cor-vermelho); color: white; }
-        .btn-azul { background-color: var(--cor-azul); color: white; }
-        .btn-icon { background: none; border: none; font-size: 1.2em; cursor: pointer; color: var(--cor-texto-leve); transition: var(--transicao); padding: 5px; border-radius: 50%; width: 35px; height: 35px; line-height: 1; }
-        .btn-icon:hover { color: var(--cor-texto); background-color: var(--cor-fundo); }
-        .cards-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; margin-bottom: 25px; }
-        .card { background-color: var(--cor-card); padding: 25px; border-radius: 12px; box-shadow: var(--sombra-card); border: 1px solid var(--cor-borda); transition: var(--transicao); }
-        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
-        .card.clicavel { cursor: pointer; }
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; color: var(--cor-texto-leve); font-weight: 500; }
-        .card-header i { font-size: 2em; }
-        .card .valor { font-size: 2.2em; font-weight: 600; }
-        .card.receitas { border-left: 5px solid var(--cor-verde); } .card.receitas .valor, .card.receitas i { color: var(--cor-verde); }
-        .card.despesas { border-left: 5px solid var(--cor-vermelho); } .card.despesas .valor, .card.despesas i { color: var(--cor-vermelho); }
-        .card.saldo { border-left: 5px solid var(--cor-azul); } .card.saldo .valor, .card.saldo i { color: var(--cor-azul); }
-        .secao-filtros { background-color: var(--cor-card); padding: 20px; border-radius: 12px; box-shadow: var(--sombra-card); margin-bottom: 25px; display: flex; flex-wrap: wrap; gap: 20px; align-items: center; justify-content: space-between; }
-        .grupo-filtro { display: flex; align-items: center; gap: 10px; }
-        .grupo-filtro label { font-weight: 500; }
-        .grupo-filtro input[type="date"] { padding: 8px; border-radius: 6px; border: 1px solid var(--cor-borda); background-color: var(--cor-fundo); color: var(--cor-texto); }
-        .btn-filtro { background-color: var(--cor-fundo); border: 1px solid var(--cor-borda); padding: 8px 18px; border-radius: 20px; cursor: pointer; transition: var(--transicao); font-weight: 500; }
-        .btn-filtro.active { background-color: var(--cor-azul); color: white; border-color: var(--cor-azul); }
-        .grid-principal { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; }
-        .widget { background-color: var(--cor-card); padding: 25px; border-radius: 12px; box-shadow: var(--sombra-card); border: 1px solid var(--cor-borda); position: relative; }
-        .widget h2 { margin-top: 0; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-        .tabela-contas-wrapper { max-height: 400px; overflow-y: auto; }
-        .tabela-contas { width: 100%; border-collapse: collapse; }
-        .tabela-contas th, .tabela-contas td { text-align: left; padding: 14px; border-bottom: 1px solid var(--cor-borda); }
-        .tabela-contas th:last-child, .tabela-contas td:last-child { text-align: right; }
-        .tabela-contas thead { position: sticky; top: 0; background-color: var(--cor-card); z-index: 1; }
-        .tabela-contas tbody tr:hover { background-color: var(--cor-fundo); }
-        .tabela-contas .status-Pendente { background-color: var(--cor-amarelo-fundo); color: var(--cor-amarelo-texto); font-weight: 500; }
-        .tabela-contas .acoes { display: flex; gap: 10px; justify-content: flex-end; }
-        .modal-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; animation: fadeIn 0.3s ease; }
-        .modal-content { background-color: var(--cor-card); padding: 30px; border-radius: 12px; width: 90%; max-width: 600px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: scaleUp 0.3s ease; max-height: 90vh; display: flex; flex-direction: column; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .modal-header h2 { margin: 0; }
-        .modal-body { overflow-y: auto; padding-right: 15px; margin-right: -15px; }
+        :root { 
+            --cor-fundo: #f0f2f5; 
+            --cor-texto: #363f5f; 
+            --cor-texto-leve: #969cb3; 
+            --cor-card: #ffffff; 
+            --cor-borda: #e2e8f0; 
+            --cor-verde: #10b981; 
+            --cor-vermelho: #ef4444; 
+            --cor-azul: #3b82f6; 
+            --cor-amarelo-fundo: #fef9c3; 
+            --cor-amarelo-texto: #a16207; 
+            --sombra-card: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); 
+            --transicao: all 0.3s ease-in-out; 
+        }
+        body.dark-mode { 
+            --cor-fundo: #1a202c; 
+            --cor-texto: #e2e8f0; 
+            --cor-texto-leve: #a0aec0; 
+            --cor-card: #2d3748; 
+            --cor-borda: #4a5568; 
+            --cor-amarelo-fundo: #4a4a28; 
+            --cor-amarelo-texto: #fef08a;
+        }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: var(--cor-fundo); 
+            color: var(--cor-texto); 
+            margin: 0; 
+            padding: 20px; 
+            transition: var(--transicao); 
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .container { 
+            max-width: 1600px; 
+            margin: 0 auto; 
+            flex: 1;
+        }
+        header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding-bottom: 25px; 
+            flex-wrap: wrap; 
+            gap: 15px; 
+            border-bottom: 1px solid var(--cor-borda); 
+            margin-bottom: 25px; 
+        }
+        .header-title { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            flex-wrap: wrap; 
+        }
+        .header-actions { 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+        }
+        header h1 { 
+            margin: 0; 
+            font-size: 2em; 
+        }
+        .btn { 
+            padding: 12px 24px; 
+            border-radius: 8px; 
+            text-decoration: none; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 8px; 
+            transition: var(--transicao); 
+            font-weight: 500; 
+            border: none; 
+            cursor: pointer; 
+            font-size: 1em;
+            touch-action: manipulation;
+        }
+        .btn-verde { 
+            background-color: var(--cor-verde); 
+            color: white; 
+        }
+        .btn-vermelho { 
+            background-color: var(--cor-vermelho); 
+            color: white; 
+        }
+        .btn-azul { 
+            background-color: var(--cor-azul); 
+            color: white; 
+        }
+        .btn-icon { 
+            background: none; 
+            border: none; 
+            font-size: 1.4em; 
+            cursor: pointer; 
+            color: var(--cor-texto-leve); 
+            transition: var(--transicao); 
+            padding: 8px; 
+            border-radius: 50%; 
+            width: 40px; 
+            height: 40px; 
+            line-height: 1; 
+        }
+        .btn-icon:hover { 
+            color: var(--cor-texto); 
+            background-color: var(--cor-fundo); 
+        }
+        .cards-resumo { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 25px; 
+            margin-bottom: 25px; 
+        }
+        .card { 
+            background-color: var(--cor-card); 
+            padding: 25px; 
+            border-radius: 12px; 
+            box-shadow: var(--sombra-card); 
+            border: 1px solid var(--cor-borda); 
+            transition: var(--transicao); 
+            cursor: pointer; 
+        }
+        .card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); 
+        }
+        .card-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 15px; 
+            color: var(--cor-texto-leve); 
+            font-weight: 500; 
+        }
+        .card-header i { 
+            font-size: 2em; 
+        }
+        .card .valor { 
+            font-size: 2.2em; 
+            font-weight: 600; 
+        }
+        .card.receitas { 
+            border-left: 5px solid var(--cor-verde); 
+        } 
+        .card.receitas .valor, .card.receitas i { 
+            color: var(--cor-verde); 
+        }
+        .card.despesas { 
+            border-left: 5px solid var(--cor-vermelho); 
+        } 
+        .card.despesas .valor, .card.despesas i { 
+            color: var(--cor-vermelho); 
+        }
+        .card.saldo { 
+            border-left: 5px solid var(--cor-azul); 
+        } 
+        .card.saldo .valor, .card.saldo i { 
+            color: var(--cor-azul); 
+        }
+        .secao-filtros { 
+            background-color: var(--cor-card); 
+            padding: 20px; 
+            border-radius: 12px; 
+            box-shadow: var(--sombra-card); 
+            margin-bottom: 25px; 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 20px; 
+            align-items: center; 
+            justify-content: space-between; 
+        }
+        .grupo-filtro { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            flex-wrap: wrap;
+        }
+        .grupo-filtro label { 
+            font-weight: 500; 
+        }
+        .grupo-filtro input[type="date"] { 
+            padding: 10px; 
+            border-radius: 6px; 
+            border: 1px solid var(--cor-borda); 
+            background-color: var(--cor-fundo); 
+            color: var(--cor-texto); 
+            font-size: 1em;
+        }
+        .btn-filtro { 
+            background-color: var(--cor-fundo); 
+            border: 1px solid var(--cor-borda); 
+            padding: 10px 20px; 
+            border-radius: 20px; 
+            cursor: pointer; 
+            transition: var(--transicao); 
+            font-weight: 500; 
+            font-size: 1em;
+        }
+        .btn-filtro.active { 
+            background-color: var(--cor-azul); 
+            color: white; 
+            border-color: var(--cor-azul); 
+        }
+        .grid-principal { 
+            display: grid; 
+            grid-template-columns: 2fr 1fr; 
+            gap: 25px; 
+        }
+        .widget { 
+            background-color: var(--cor-card); 
+            padding: 25px; 
+            border-radius: 12px; 
+            box-shadow: var(--sombra-card); 
+            border: 1px solid var(--cor-borda); 
+            position: relative; 
+        }
+        .widget h2 { 
+            margin-top: 0; 
+            margin-bottom: 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            font-size: 1.5em;
+        }
+        .tabela-contas-wrapper { 
+            max-height: 400px; 
+            overflow-y: auto; 
+            overflow-x: auto; 
+        }
+        .tabela-contas { 
+            width: 100%; 
+            border-collapse: collapse; 
+            min-width: 600px; 
+        }
+        .tabela-contas th, .tabela-contas td { 
+            text-align: left; 
+            padding: 14px; 
+            border-bottom: 1px solid var(--cor-borda); 
+        }
+        .tabela-contas th:last-child, .tabela-contas td:last-child { 
+            text-align: right; 
+        }
+        .tabela-contas thead { 
+            position: sticky; 
+            top: 0; 
+            background-color: var(--cor-card); 
+            z-index: 1; 
+        }
+        .tabela-contas tbody tr:hover { 
+            background-color: var(--cor-fundo); 
+        }
+        .tabela-contas .status-Pendente { 
+            background-color: var(--cor-amarelo-fundo); 
+            color: var(--cor-amarelo-texto); 
+            font-weight: 500; 
+        }
+        .tabela-contas .acoes { 
+            display: flex; 
+            gap: 10px; 
+            justify-content: flex-end; 
+        }
+        .modal-container { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background-color: rgba(0,0,0,0.6); 
+            display: none; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 1000; 
+            animation: fadeIn 0.3s ease; 
+            overflow: auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .modal-content { 
+            background-color: var(--cor-card); 
+            padding: 30px; 
+            border-radius: 12px; 
+            width: 90%; 
+            max-width: 600px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+            animation: scaleUp 0.3s ease; 
+            max-height: 90vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden;
+        }
+        .modal-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 20px; 
+        }
+        .modal-header h2 { 
+            margin: 0; 
+            font-size: 1.8em;
+        }
+        .modal-body { 
+            overflow-y: auto; 
+            padding-right: 15px; 
+            margin-right: -15px; 
+            flex: 1;
+        }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes scaleUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .modal-content form { display: flex; flex-direction: column; gap: 15px; }
-        .form-grupo { display: flex; flex-direction: column; gap: 5px; }
-        .form-grupo label { font-weight: 500; font-size: 0.9em; color: var(--cor-texto-leve); }
-        .modal-content input, .modal-content select { padding: 12px; border: 1px solid var(--cor-borda); border-radius: 8px; font-size: 1em; background-color: var(--cor-fundo); color: var(--cor-texto); }
-        .form-botoes { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; }
-        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
-        .toast { padding: 15px 20px; border-radius: 8px; color: white; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s ease-out; }
-        .toast.success { background-color: var(--cor-verde); }
-        .toast.error { background-color: var(--cor-vermelho); }
+        .modal-content form { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+        }
+        .form-grupo { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 5px; 
+        }
+        .form-grupo label { 
+            font-weight: 500; 
+            font-size: 0.9em; 
+            color: var(--cor-texto-leve); 
+        }
+        .modal-content input, .modal-content select { 
+            padding: 12px; 
+            border: 1px solid var(--cor-borda); 
+            border-radius: 8px; 
+            font-size: 1em; 
+            background-color: var(--cor-fundo); 
+            color: var(--cor-texto); 
+        }
+        .form-botoes { 
+            display: flex; 
+            gap: 10px; 
+            justify-content: flex-end; 
+            margin-top: 10px; 
+        }
+        #toast-container { 
+            position: fixed; 
+            top: 20px; 
+            right: 20px; 
+            z-index: 2000; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+        }
+        .toast { 
+            padding: 15px 20px; 
+            border-radius: 8px; 
+            color: white; 
+            font-weight: 500; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            animation: slideIn 0.3s ease-out; 
+            max-width: 300px;
+        }
+        .toast.success { 
+            background-color: var(--cor-verde); 
+        }
+        .toast.error { 
+            background-color: var(--cor-vermelho); 
+        }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @media (max-width: 1200px) { .grid-principal { grid-template-columns: 1fr; } }
-        @media (max-width: 768px) { body { padding: 10px; } header h1 { font-size: 1.5em; } .secao-filtros { flex-direction: column; align-items: stretch; gap: 15px; } }
+
+        /* Improved Responsiveness */
+        @media (max-width: 1200px) { 
+            .grid-principal { 
+                grid-template-columns: 1fr; 
+            } 
+        }
+        @media (max-width: 768px) { 
+            body { 
+                padding: 10px; 
+            } 
+            header h1 { 
+                font-size: 1.5em; 
+            } 
+            .secao-filtros { 
+                flex-direction: column; 
+                align-items: stretch; 
+                gap: 15px; 
+            } 
+            .cards-resumo { 
+                grid-template-columns: 1fr; 
+            } 
+            .btn { 
+                padding: 12px 20px; 
+                font-size: 0.95em; 
+            } 
+            .btn-icon { 
+                font-size: 1.3em; 
+                width: 38px; 
+                height: 38px; 
+            } 
+            .modal-container { 
+                padding: 10px; 
+            } 
+            .modal-content { 
+                width: 100%; 
+                max-width: none; 
+                max-height: 95vh; 
+                padding: 20px; 
+            } 
+            .widget { 
+                padding: 20px; 
+            } 
+            .widget h2 { 
+                font-size: 1.3em; 
+            } 
+            .card { 
+                padding: 20px; 
+            } 
+            .card .valor { 
+                font-size: 2em; 
+            } 
+        }
+        @media (max-width: 480px) { 
+            header { 
+                flex-direction: column; 
+                align-items: flex-start; 
+            } 
+            .header-actions { 
+                width: 100%; 
+                justify-content: space-between; 
+            } 
+            .grupo-filtro { 
+                flex-direction: column; 
+                align-items: stretch; 
+            } 
+            .btn-filtro { 
+                width: 100%; 
+                margin-bottom: 10px; 
+            } 
+            .tabela-contas th, .tabela-contas td { 
+                padding: 10px; 
+                font-size: 0.9em; 
+            } 
+        }
+
+        /* Device-based adaptations (touch devices) */
+        @media (pointer: coarse) {
+            .btn { 
+                padding: 15px 30px; 
+                font-size: 1.1em; 
+            }
+            .btn-icon { 
+                width: 45px; 
+                height: 45px; 
+                font-size: 1.5em; 
+            }
+            input, select { 
+                font-size: 1.1em; 
+                padding: 14px; 
+            }
+            .card { 
+                padding: 30px; 
+            }
+        }
     </style>
 </head>
 <body>
@@ -81,15 +482,15 @@
             <div class="header-title">
                 <h1>Dashboard Financeiro</h1>
                 <div class="grupo-botoes-export">
-                    <button class="btn-icon" id="btn-export-pdf-receitas" title="Exportar PDF de Receitas"><i class="fa-solid fa-file-pdf"></i></button>
-                    <button class="btn-icon" id="btn-export-csv-receitas" title="Exportar CSV de Receitas"><i class="fa-solid fa-file-csv"></i></button>
-                    <button class="btn-icon" id="btn-export-pdf-despesas" title="Exportar PDF de Despesas"><i class="fa-solid fa-file-invoice-dollar"></i></button>
-                    <button class="btn-icon" id="btn-export-csv-despesas" title="Exportar CSV de Despesas"><i class="fa-solid fa-file-csv"></i></button>
+                    <button class="btn-icon" id="btn-export-pdf-receitas" title="Exportar PDF de Receitas" aria-label="Exportar PDF de Receitas"><i class="fa-solid fa-file-pdf"></i></button>
+                    <button class="btn-icon" id="btn-export-csv-receitas" title="Exportar CSV de Receitas" aria-label="Exportar CSV de Receitas"><i class="fa-solid fa-file-csv"></i></button>
+                    <button class="btn-icon" id="btn-export-pdf-despesas" title="Exportar PDF de Despesas" aria-label="Exportar PDF de Despesas"><i class="fa-solid fa-file-invoice-dollar"></i></button>
+                    <button class="btn-icon" id="btn-export-csv-despesas" title="Exportar CSV de Despesas" aria-label="Exportar CSV de Despesas"><i class="fa-solid fa-file-csv"></i></button>
                 </div>
-                <button class="btn-icon" id="btn-refresh" title="Recarregar Dados"><i class="fa-solid fa-sync-alt"></i></button>
+                <button class="btn-icon" id="btn-refresh" title="Recarregar Dados" aria-label="Recarregar Dados"><i class="fa-solid fa-sync-alt"></i></button>
             </div>
             <div class="header-actions">
-                <button class="btn-icon" id="btn-toggle-theme" title="Mudar tema"><i class="fa-solid fa-moon"></i></button>
+                <button class="btn-icon" id="btn-toggle-theme" title="Mudar tema" aria-label="Mudar tema"><i class="fa-solid fa-moon"></i></button>
                 <div class="grupo-botoes-registro">
                     <button id="btn-abrir-modal-receita" class="btn btn-verde"><i class="fa-solid fa-plus"></i> Receita</button>
                     <button id="btn-abrir-modal-despesa" class="btn btn-vermelho"><i class="fa-solid fa-minus"></i> Despesa</button>
@@ -117,7 +518,7 @@
                     <div class="widget"> <h2 id="titulo-grafico">Evolução Financeira</h2> <canvas id="grafico-linhas"></canvas> </div>
                     <div class="widget"> <h2 id="titulo-categorias">Top 10 Despesas por Fonte</h2> <canvas id="grafico-categorias"></canvas> </div>
                     <div class="widget" style="grid-column: 1 / -1;">
-                        <h2>Planejador de Contas <button class="btn-icon" id="btn-abrir-modal-planejador" title="Adicionar conta a planejar"><i class="fa-solid fa-plus"></i></button></h2>
+                        <h2>Planejador de Contas <button class="btn-icon" id="btn-abrir-modal-planejador" title="Adicionar conta a planejar" aria-label="Adicionar conta a planejar"><i class="fa-solid fa-plus"></i></button></h2>
                         <div class="tabela-contas-wrapper"><table class="tabela-contas"><thead><tr><th>Data</th><th>Fonte</th><th>Valor</th><th>Ações</th></tr></thead><tbody id="corpo-tabela-planejador"></tbody></table></div>
                     </div>
                 </section>
@@ -127,13 +528,13 @@
 
     <div id="modal-detalhes" class="modal-container">
         <div class="modal-content">
-            <div class="modal-header"><h2 id="modal-detalhes-titulo">Detalhes</h2><button id="btn-fechar-detalhes" class="btn-icon">&times;</button></div>
+            <div class="modal-header"><h2 id="modal-detalhes-titulo">Detalhes</h2><button id="btn-fechar-detalhes" class="btn-icon" aria-label="Fechar">&times;</button></div>
             <div id="modal-detalhes-conteudo" class="modal-body"></div>
         </div>
     </div>
     <div id="modal-registro" class="modal-container">
         <div class="modal-content">
-            <div class="modal-header"><h2 id="modal-registro-titulo">Registrar</h2><button id="btn-fechar-registro" class="btn-icon">&times;</button></div>
+            <div class="modal-header"><h2 id="modal-registro-titulo">Registrar</h2><button id="btn-fechar-registro" class="btn-icon" aria-label="Fechar">&times;</button></div>
             <div class="modal-body">
                 <form id="form-registro">
                     <input type="hidden" id="reg-id">
@@ -153,7 +554,7 @@
     </div>
     <div id="modal-planejador" class="modal-container">
         <div class="modal-content">
-            <div class="modal-header"><h2 id="modal-planejador-titulo">Adicionar Conta a Pagar</h2><button id="btn-fechar-planejador" class="btn-icon">&times;</button></div>
+            <div class="modal-header"><h2 id="modal-planejador-titulo">Adicionar Conta a Pagar</h2><button id="btn-fechar-planejador" class="btn-icon" aria-label="Fechar">&times;</button></div>
             <div class="modal-body">
                 <form id="form-planejador">
                     <input type="hidden" id="planejador-id">
@@ -589,4 +990,3 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
-
