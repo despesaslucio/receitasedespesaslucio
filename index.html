@@ -388,9 +388,9 @@
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
         /* Enhanced Responsiveness */
-        @media (max-width: 1200px) { 
+        @media (min-width: 1200px) { 
             .grid-principal { 
-                grid-template-columns: 1fr; 
+                grid-template-columns: 2fr 1fr; 
             } 
         }
         @media (max-width: 768px) { 
@@ -608,420 +608,554 @@
     <datalist id="datalist-locais"></datalist>
     <datalist id="datalist-fontes"></datalist>
     
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    'use strict';
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            'use strict';
 
-    // --- CONFIGURAÇÃO SUPABASE ---
-    const SUPABASE_URL = 'https://ixnehktrmckhnavjexhr.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4bmVoa3RybWNraG5hdmpleGhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4OTkxMzksImV4cCI6MjA3MTQ3NTEzOX0.bU6rSkZlNV5kzRzDUi4eFYnu2SETWYRwP6h6S75am4c';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            // --- CONFIGURAÇÃO SUPABASE ---
+            const SUPABASE_URL = 'https://ixnehktrmckhnavjexhr.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4bmVoa3RybWNraG5hdmpleGhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4OTkxMzksImV4cCI6MjA3MTQ3NTEzOX0.bU6rSkZlNV5kzRzDUi4eFYnu2SETWYRwP6h6S75am4c';
+            const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // --- DADOS LOCAIS (Para sugestões) ---
-    const locais = ["Panevie", "Buono Trigo Industria", "Buono Trigo", "Casa"];
-    const fontesReceita = ["Cartão Panevie", "Cartão Industria", "Cartão Buono Trigo", "Madrugada", "Outra"];
-    const fontesDespesa = ["Água","Aluguel","Arrendamento padaria","Amora","Casa Garcia","Combustível Fiorino","Combustível Jumper","Comercial Mab","Confraternização","Contadora","DAS","Despesas Cartão","Doações Instituições","Diarista Lucélia","Energia","FGTS","Financiamento Solar","Forn Água","Forn Armazem","Forn ASSAI","FORN BEIJU","FORN BETANIA","FORN BOLACHA FOL","FORN BOMBONIERE","FORN BUNGE","FORN CASTANHA","FORN CACHOEIRA","FORN COCO","FORN EMBALAGENS","FORN ELMA CHIPS","FORN ESTRELA (FARINHA)","FORN FARMÁCIA","FORN FORPAN","FORN FRIGORIFICO","FORN FRIOS INDUSTRIA","FORN FRIOS PANEVIE","FORN GÁS","FORN ISIS","FORN JANDAIA","FORN LINDENBERG","FORN M. DIAS BRANCO","FORN MERC ADRIEL","FORN MILFRIOS","FORN DE OVOS","FORN OMEGA","FORN PADEIRÃO","FORN PAMONHA","FORN PÃO DE QUEIJO","FORN PEPSICO","FORN PRODUTOS DE LIMPEZA","FORN REFRI","FORN ROYAL","FORN SOLMAR","FORN SR RICARDO","FORN TEMP BOLOS","FORN TAPIOCA LEONARDO","FORN TAPIOCA ZEZO","INSS","INTERNET","PARCELAMENTO RECEITA FEDERAL","DESPESAS MOTO","PONTO DAS REFRIGERAÇÕES","MANUTENÇÃO FIORINO","MANUTENÇÃO PADARIA","PRESTAÇÃO FURGÃO","RP CONSULTORIA","SALÁRIO MICHELE","SALÁRIO ANGELA","SALÁRIO JULIANA","SALÁRIO RAIMUNDO","SALÁRIO CARLOS","SALÁRIO GABRIEL","SALÁRIO LUCIO","SALÁRIO LUCIENE","SALÁRIO ALINE","SALÁRIO ZÉ","SEGURO BRADESCO","SEGURO PREDIAL","SINDPAN","SISTEMA","TAXA BANCÁRIA","SIMPLES NACIONAL","DIARISTA","EMBALAGEM PAPAI","ENERGIA SOLAR","FORN. QUEIJO","MAQUINÁRIO CETRO","MAQUINÁRIO ITAIYMAC","MAQUILAR","SALÁRIO LUANA","SALÁRIO PAULO","SALÁRIO D. BRANCA","TIM","MARFRIOS","SALÁRIO SOCORRO","ESPORTE JÚLIA","CAGECE","CARTÃO EXTRA","CARTÃO BRADESCO","CARTÃO ITAÚ","COLÉGIO JULIA","CONSÓRCIO","ECC PARACURU","FIES LUCIO","FIES MARINA","IGREJA","JANETE","LAZER FAMÍLIA","LUZ","MANUTENÇÃO CARRO","REFORÇO JÚLIA","MERCANTIL","PLANO DE SAÚDE","PRESTAÇÃO CASA","COMBUSTIVEL","CARRO","TELEFONE","TV A CABO","CASA CCF","Outra"];
-    
-    // --- VARIÁVEIS GLOBAIS ---
-    let transacoesGeral = [];
-    let transacoesFiltradas = []; // << NOVO: Guarda os dados que estão visíveis na tela
-    let graficoLinhas = null;
-    let graficoCategorias = null;
-
-    // --- SELETORES DE ELEMENTOS ---
-    const loadingDiv = document.getElementById('loading');
-    const dashboardContentDiv = document.getElementById('dashboard-content');
-    const totalReceitasEl = document.getElementById('total-receitas');
-    const totalDespesasEl = document.getElementById('total-despesas');
-    const saldoTotalEl = document.getElementById('saldo-total');
-    const corpoTabelaPlanejador = document.getElementById('corpo-tabela-planejador');
-    const btnRefresh = document.getElementById('btn-refresh');
-    const btnToggleTheme = document.getElementById('btn-toggle-theme');
-    const cardReceitas = document.getElementById('card-receitas');
-    const cardDespesas = document.getElementById('card-despesas');
-    const cardSaldo = document.getElementById('card-saldo');
-    const modalDetalhes = document.getElementById('modal-detalhes');
-    const modalDetalhesTitulo = document.getElementById('modal-detalhes-titulo');
-    const modalDetalhesConteudo = document.getElementById('modal-detalhes-conteudo');
-    const btnFecharDetalhes = document.getElementById('btn-fechar-detalhes');
-    const modalRegistro = document.getElementById('modal-registro');
-    const modalRegistroTitulo = document.getElementById('modal-registro-titulo');
-    const btnAbrirModalReceita = document.getElementById('btn-abrir-modal-receita');
-    const btnAbrirModalDespesa = document.getElementById('btn-abrir-modal-despesa');
-    const btnFecharRegistro = document.getElementById('btn-fechar-registro');
-    const btnCancelarRegistro = document.getElementById('btn-cancelar-registro');
-    const formRegistro = document.getElementById('form-registro');
-    const btnSalvarRegistro = document.getElementById('btn-salvar-registro');
-    const datalistLocais = document.getElementById('datalist-locais');
-    const datalistFontes = document.getElementById('datalist-fontes');
-    const btnExportPdfReceitas = document.getElementById('btn-export-pdf-receitas');
-    const btnExportCsvReceitas = document.getElementById('btn-export-csv-receitas');
-    const btnExportPdfDespesas = document.getElementById('btn-export-pdf-despesas');
-    const btnExportCsvDespesas = document.getElementById('btn-export-csv-despesas');
-    const modalPlanejador = document.getElementById('modal-planejador');
-    const btnAbrirModalPlanejador = document.getElementById('btn-abrir-modal-planejador');
-    const btnFecharPlanejador = document.getElementById('btn-fechar-planejador');
-    const btnCancelarPlanejador = document.getElementById('btn-cancelar-planejador');
-    const formPlanejador = document.getElementById('form-planejador');
-    const dataInicioInput = document.getElementById('data-inicio');
-    const dataFimInput = document.getElementById('data-fim');
-    const btnAplicarFiltroData = document.getElementById('btn-aplicar-filtro-data');
-    const toastContainer = document.getElementById('toast-container');
-
-    // --- FUNÇÕES AUXILIARES ---
-    const formatarMoeda = (valor) => (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    const formatarData = (data) => data instanceof Date && !isNaN(data) ? data.toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Data inválida';
-    const popularDatalist = (datalistEl, lista) => { datalistEl.innerHTML = ''; lista.sort().forEach(item => { const option = document.createElement('option'); option.value = item; datalistEl.appendChild(option); }); };
-    
-    function showToast(message, type = 'success') {
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        const icon = type === 'success' ? 'fa-check-circle' : 'fa-times-circle';
-        toast.innerHTML = `<i class="fa-solid ${icon}"></i> ${message}`;
-        toastContainer.appendChild(toast);
-        setTimeout(() => toast.remove(), 4000);
-    }
-    
-    function obterDescricaoFiltro() {
-        const periodoBtn = document.querySelector('#filtro-periodo .active');
-        if (periodoBtn) {
-            return `(${periodoBtn.textContent})`;
-        }
-        if (dataInicioInput.value && dataFimInput.value) {
-            const inicio = new Date(`${dataInicioInput.value}T00:00:00`).toLocaleDateString('pt-BR');
-            const fim = new Date(`${dataFimInput.value}T00:00:00`).toLocaleDateString('pt-BR');
-            return `(de ${inicio} a ${fim})`;
-        }
-        return '(Todos os Períodos)';
-    }
-
-    // --- FUNÇÕES DE EXPORTAÇÃO (CORRIGIDO E NOVO) ---
-    function exportarParaPDF(tipo) {
-        const dadosParaExportar = transacoesFiltradas.filter(t => t.tipo === tipo);
-        if (dadosParaExportar.length === 0) {
-            showToast(`Nenhuma ${tipo.toLowerCase()} para exportar no período selecionado.`, 'error');
-            return;
-        }
-
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        const descricaoFiltro = obterDescricaoFiltro();
-        
-        doc.text(`Relatório de ${tipo}s ${descricaoFiltro}`, 14, 15);
-
-        const tableData = dadosParaExportar.map(t => [
-            formatarData(t.Data),
-            t.local || '-',
-            t.fonte || '-',
-            formatarMoeda(t.valor)
-        ]);
-        
-        doc.autoTable({
-            head: [['Data', 'Local', 'Fonte', 'Valor']],
-            body: tableData,
-            startY: 25
-        });
-        
-        doc.save(`relatorio-${tipo.toLowerCase()}-${new Date().toISOString().split('T')[0]}.pdf`);
-    }
-
-    function exportarParaCSV(tipo) {
-        const dadosParaExportar = transacoesFiltradas.filter(t => t.tipo === tipo);
-        if (dadosParaExportar.length === 0) {
-            showToast(`Nenhuma ${tipo.toLowerCase()} para exportar no período selecionado.`, 'error');
-            return;
-        }
-
-        const headers = ['Data', 'Local', 'Fonte', 'Valor'];
-        let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
-
-        dadosParaExportar.forEach(t => {
-            const valorNumerico = (t.valor || 0).toFixed(2).replace('.', ',');
-            const row = [
-                formatarData(t.Data),
-                `"${t.local || '-'}"`,
-                `"${t.fonte || '-'}"`,
-                `"${valorNumerico}"`
-            ];
-            csvContent += row.join(",") + "\n";
-        });
-
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `relatorio-${tipo.toLowerCase()}-${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
-
-    // --- FUNÇÕES PRINCIPAIS (COM SUPABASE) ---
-    async function carregarDadosIniciais() {
-        loadingDiv.style.display = 'block';
-        dashboardContentDiv.style.display = 'none';
-        btnRefresh.firstElementChild.classList.add('fa-spin');
-        try {
-            const { data, error } = await supabase.from('transacoes').select('*');
-            if (error) throw error;
+            // --- DADOS LOCAIS (Para sugestões) ---
+            const locais = ["Panevie", "Buono Trigo Industria", "Buono Trigo", "Casa"];
+            const fontesReceita = ["Cartão Panevie", "Cartão Industria", "Cartão Buono Trigo", "Madrugada", "Outra"];
+            const fontesDespesa = ["Água","Aluguel","Arrendamento padaria","Amora","Casa Garcia","Combustível Fiorino","Combustível Jumper","Comercial Mab","Confraternização","Contadora","DAS","Despesas Cartão","Doações Instituições","Diarista Lucélia","Energia","FGTS","Financiamento Solar","Forn Água","Forn Armazem","Forn ASSAI","FORN BEIJU","FORN BETANIA","FORN BOLACHA FOL","FORN BOMBONIERE","FORN BUNGE","FORN CASTANHA","FORN CACHOEIRA","FORN COCO","FORN EMBALAGENS","FORN ELMA CHIPS","FORN ESTRELA (FARINHA)","FORN FARMÁCIA","FORN FORPAN","FORN FRIGORIFICO","FORN FRIOS INDUSTRIA","FORN FRIOS PANEVIE","FORN GÁS","FORN ISIS","FORN JANDAIA","FORN LINDENBERG","FORN M. DIAS BRANCO","FORN MERC ADRIEL","FORN MILFRIOS","FORN DE OVOS","FORN OMEGA","FORN PADEIRÃO","FORN PAMONHA","FORN PÃO DE QUEIJO","FORN PEPSICO","FORN PRODUTOS DE LIMPEZA","FORN REFRI","FORN ROYAL","FORN SOLMAR","FORN SR RICARDO","FORN TEMP BOLOS","FORN TAPIOCA LEONARDO","FORN TAPIOCA ZEZO","INSS","INTERNET","PARCELAMENTO RECEITA FEDERAL","DESPESAS MOTO","PONTO DAS REFRIGERAÇÕES","MANUTENÇÃO FIORINO","MANUTENÇÃO PADARIA","PRESTAÇÃO FURGÃO","RP CONSULTORIA","SALÁRIO MICHELE","SALÁRIO ANGELA","SALÁRIO JULIANA","SALÁRIO RAIMUNDO","SALÁRIO CARLOS","SALÁRIO GABRIEL","SALÁRIO LUCIO","SALÁRIO LUCIENE","SALÁRIO ALINE","SALÁRIO ZÉ","SEGURO BRADESCO","SEGURO PREDIAL","SINDPAN","SISTEMA","TAXA BANCÁRIA","SIMPLES NACIONAL","DIARISTA","EMBALAGEM PAPAI","ENERGIA SOLAR","FORN. QUEIJO","MAQUINÁRIO CETRO","MAQUINÁRIO ITAIYMAC","MAQUILAR","SALÁRIO LUANA","SALÁRIO PAULO","SALÁRIO D. BRANCA","TIM","MARFRIOS","SALÁRIO SOCORRO","ESPORTE JÚLIA","CAGECE","CARTÃO EXTRA","CARTÃO BRADESCO","CARTÃO ITAÚ","COLÉGIO JULIA","CONSÓRCIO","ECC PARACURU","FIES LUCIO","FIES MARINA","IGREJA","JANETE","LAZER FAMÍLIA","LUZ","MANUTENÇÃO CARRO","REFORÇO JÚLIA","MERCANTIL","PLANO DE SAÚDE","PRESTAÇÃO CASA","COMBUSTIVEL","CARRO","TELEFONE","TV A CABO","CASA CCF","Outra"];
             
-            transacoesGeral = data.map(item => ({
-                ...item,
-                Data: new Date(`${item.data}T00:00:00`) 
-            })).filter(t => t.Data instanceof Date && !isNaN(t.Data));
-            
-            aplicarFiltros();
-            loadingDiv.style.display = 'none';
-            dashboardContentDiv.style.display = 'block';
-        } catch (error) {
-            console.error('Erro ao buscar dados do Supabase:', error);
-            showToast(`Falha ao carregar: ${error.message}`, 'error');
-            loadingDiv.innerHTML = `<p style="color:var(--cor-vermelho);"><i class="fa-solid fa-circle-xmark"></i> Falha ao carregar.</p>`;
-        } finally {
-            btnRefresh.firstElementChild.classList.remove('fa-spin');
-        }
-    }
+            // --- VARIÁVEIS GLOBAIS ---
+            let transacoesGeral = [];
+            let transacoesFiltradas = [];
+            let graficoLinhas = null;
+            let graficoCategorias = null;
 
-    async function submeterDados(dados, id = null) {
-        const btnText = btnSalvarRegistro.querySelector('.btn-text');
-        const btnSpinner = btnSalvarRegistro.querySelector('.fa-spinner');
-        if (btnText && btnSpinner) { btnText.textContent = 'Salvando...'; btnSpinner.style.display = 'inline-block'; btnSalvarRegistro.disabled = true; }
-        
-        try {
-            let error;
-            if (id) {
-                const { error: updateError } = await supabase.from('transacoes').update(dados).eq('id', id);
-                error = updateError;
-            } else {
-                const { error: insertError } = await supabase.from('transacoes').insert([dados]);
-                error = insertError;
+            // --- SELETORES DE ELEMENTOS ---
+            const loadingDiv = document.getElementById('loading');
+            const dashboardContentDiv = document.getElementById('dashboard-content');
+            const totalReceitasEl = document.getElementById('total-receitas');
+            const totalDespesasEl = document.getElementById('total-despesas');
+            const saldoTotalEl = document.getElementById('saldo-total');
+            const corpoTabelaPlanejador = document.getElementById('corpo-tabela-planejador');
+            const btnRefresh = document.getElementById('btn-refresh');
+            const btnToggleTheme = document.getElementById('btn-toggle-theme');
+            const cardReceitas = document.getElementById('card-receitas');
+            const cardDespesas = document.getElementById('card-despesas');
+            const cardSaldo = document.getElementById('card-saldo');
+            const modalDetalhes = document.getElementById('modal-detalhes');
+            const modalDetalhesTitulo = document.getElementById('modal-detalhes-titulo');
+            const modalDetalhesConteudo = document.getElementById('modal-detalhes-conteudo');
+            const btnFecharDetalhes = document.getElementById('btn-fechar-detalhes');
+            const modalRegistro = document.getElementById('modal-registro');
+            const modalRegistroTitulo = document.getElementById('modal-registro-titulo');
+            const btnAbrirModalReceita = document.getElementById('btn-abrir-modal-receita');
+            const btnAbrirModalDespesa = document.getElementById('btn-abrir-modal-despesa');
+            const btnFecharRegistro = document.getElementById('btn-fechar-registro');
+            const btnCancelarRegistro = document.getElementById('btn-cancelar-registro');
+            const formRegistro = document.getElementById('form-registro');
+            const btnSalvarRegistro = document.getElementById('btn-salvar-registro');
+            const datalistLocais = document.getElementById('datalist-locais');
+            const datalistFontes = document.getElementById('datalist-fontes');
+            const btnExportPdfReceitas = document.getElementById('btn-export-pdf-receitas');
+            const btnExportCsvReceitas = document.getElementById('btn-export-csv-receitas');
+            const btnExportPdfDespesas = document.getElementById('btn-export-pdf-despesas');
+            const btnExportCsvDespesas = document.getElementById('btn-export-csv-despesas');
+            const modalPlanejador = document.getElementById('modal-planejador');
+            const btnAbrirModalPlanejador = document.getElementById('btn-abrir-modal-planejador');
+            const btnFecharPlanejador = document.getElementById('btn-fechar-planejador');
+            const btnCancelarPlanejador = document.getElementById('btn-cancelar-planejador');
+            const formPlanejador = document.getElementById('form-planejador');
+            const dataInicioInput = document.getElementById('data-inicio');
+            const dataFimInput = document.getElementById('data-fim');
+            const btnAplicarFiltroData = document.getElementById('btn-aplicar-filtro-data');
+            const toastContainer = document.getElementById('toast-container');
+
+            // --- FUNÇÕES AUXILIARES ---
+            const formatarMoeda = (valor) => (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            const formatarData = (data) => data instanceof Date && !isNaN(data) ? data.toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Data inválida';
+            const popularDatalist = (datalistEl, lista) => { datalistEl.innerHTML = ''; lista.sort().forEach(item => { const option = document.createElement('option'); option.value = item; datalistEl.appendChild(option); }); };
+            
+            function showToast(message, type = 'success') {
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                const icon = type === 'success' ? 'fa-check-circle' : 'fa-times-circle';
+                toast.innerHTML = `<i class="fa-solid ${icon}"></i> ${message}`;
+                toastContainer.appendChild(toast);
+                setTimeout(() => toast.remove(), 4000);
             }
-            if (error) throw error;
-
-            showToast(`Transação ${id ? 'atualizada' : 'registrada'} com sucesso!`);
-            modalRegistro.style.display = 'none';
-            carregarDadosIniciais();
-        } catch (error) {
-            showToast(`Erro ao salvar: ${error.message}`, 'error');
-        } finally {
-            if (btnText && btnSpinner) { btnSalvarRegistro.disabled = false; btnText.textContent = 'Salvar'; btnSpinner.style.display = 'none'; }
-        }
-    }
-    
-    async function excluirTransacao(id) {
-        try {
-            const { error } = await supabase.from('transacoes').delete().eq('id', id);
-            if (error) throw error;
-            showToast('Transação excluída com sucesso!');
-            carregarDadosIniciais();
-        } catch (error) {
-            showToast(`Erro ao excluir: ${error.message}`, 'error');
-        }
-    }
-
-    function aplicarFiltros() {
-        const tipoFiltro = document.querySelector('#filtro-tipo .active').dataset.tipo;
-        const periodoFiltroBtn = document.querySelector('#filtro-periodo .active');
-        const periodoFiltro = periodoFiltroBtn ? periodoFiltroBtn.dataset.periodo : null;
-        const dataInicio = dataInicioInput.value ? new Date(`${dataInicioInput.value}T00:00:00`) : null;
-        const dataFim = dataFimInput.value ? new Date(`${dataFimInput.value}T23:59:59`) : null;
-        const hoje = new Date();
-
-        const transacoesVisiveis = transacoesGeral.filter(t => t.status !== 'Pendente');
-        
-        transacoesFiltradas = transacoesVisiveis.filter(t => { // << ATUALIZA A VARIÁVEL GLOBAL
-            if (!t || !t.Data) return false;
-            if (tipoFiltro !== 'Todos' && t.tipo !== tipoFiltro) return false;
             
-            if (dataInicio && dataFim) {
-                return t.Data >= dataInicio && t.Data <= dataFim;
-            } else if(periodoFiltro) {
-                switch(periodoFiltro) {
-                    case 'Diario': return dateFns.isSameDay(t.Data, hoje);
-                    case 'Semanal': return dateFns.isThisWeek(t.Data, { weekStartsOn: 1 });
-                    case 'Mensal': return dateFns.isSameMonth(t.Data, hoje);
-                    case 'Anual': return dateFns.isSameYear(t.Data, hoje);
-                    default: return true;
+            function obterDescricaoFiltro() {
+                const periodoBtn = document.querySelector('#filtro-periodo .active');
+                if (periodoBtn) {
+                    return `(${periodoBtn.textContent})`;
+                }
+                if (dataInicioInput.value && dataFimInput.value) {
+                    const inicio = new Date(`${dataInicioInput.value}T00:00:00`).toLocaleDateString('pt-BR');
+                    const fim = new Date(`${dataFimInput.value}T00:00:00`).toLocaleDateString('pt-BR');
+                    return `(de ${inicio} a ${fim})`;
+                }
+                return '(Todos os Períodos)';
+            }
+
+            // --- FUNÇÕES DE EXPORTAÇÃO ---
+            function exportarParaPDF(tipo) {
+                const dadosParaExportar = transacoesFiltradas.filter(t => t.tipo === tipo);
+                if (dadosParaExportar.length === 0) {
+                    showToast(`Nenhuma ${tipo.toLowerCase()} para exportar no período selecionado.`, 'error');
+                    return;
+                }
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                const descricaoFiltro = obterDescricaoFiltro();
+                
+                doc.text(`Relatório de ${tipo}s ${descricaoFiltro}`, 14, 15);
+
+                const tableData = dadosParaExportar.map(t => [
+                    formatarData(t.Data),
+                    t.local || '-',
+                    t.fonte || '-',
+                    formatarMoeda(t.valor)
+                ]);
+                
+                doc.autoTable({
+                    head: [['Data', 'Local', 'Fonte', 'Valor']],
+                    body: tableData,
+                    startY: 25
+                });
+                
+                doc.save(`relatorio-${tipo.toLowerCase()}-${new Date().toISOString().split('T')[0]}.pdf`);
+            }
+
+            function exportarParaCSV(tipo) {
+                const dadosParaExportar = transacoesFiltradas.filter(t => t.tipo === tipo);
+                if (dadosParaExportar.length === 0) {
+                    showToast(`Nenhuma ${tipo.toLowerCase()} para exportar no período selecionado.`, 'error');
+                    return;
+                }
+
+                const headers = ['Data', 'Local', 'Fonte', 'Valor'];
+                let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
+
+                dadosParaExportar.forEach(t => {
+                    const valorNumerico = (t.valor || 0).toFixed(2).replace('.', ',');
+                    const row = [
+                        formatarData(t.Data),
+                        `"${t.local || '-'}"`,
+                        `"${t.fonte || '-'}"`,
+                        `"${valorNumerico}"`
+                    ];
+                    csvContent += row.join(",") + "\n";
+                });
+
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `relatorio-${tipo.toLowerCase()}-${new Date().toISOString().split('T')[0]}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            // --- FUNÇÕES PRINCIPAIS (COM SUPABASE) ---
+            async function carregarDadosIniciais() {
+                loadingDiv.style.display = 'block';
+                dashboardContentDiv.style.display = 'none';
+                btnRefresh.firstElementChild.classList.add('fa-spin');
+                try {
+                    const { data, error } = await supabase.from('transacoes').select('*');
+                    if (error) throw error;
+                    
+                    transacoesGeral = data.map(item => ({
+                        ...item,
+                        Data: new Date(`${item.data}T00:00:00`) 
+                    })).filter(t => t.Data instanceof Date && !isNaN(t.Data));
+                    
+                    aplicarFiltros();
+                    loadingDiv.style.display = 'none';
+                    dashboardContentDiv.style.display = 'block';
+                } catch (error) {
+                    console.error('Erro ao buscar dados do Supabase:', error);
+                    showToast(`Falha ao carregar: ${error.message}`, 'error');
+                    loadingDiv.innerHTML = `<p style="color:var(--cor-vermelho);"><i class="fa-solid fa-circle-xmark"></i> Falha ao carregar.</p>`;
+                } finally {
+                    btnRefresh.firstElementChild.classList.remove('fa-spin');
                 }
             }
-            return true;
-        });
 
-        document.getElementById('titulo-grafico').textContent = `Evolução Financeira ${obterDescricaoFiltro()}`;
-        atualizarDashboard(transacoesFiltradas);
-        renderizarPlanejador();
-    }
-    
-    // As funções que não mudaram (atualizarDashboard, cards, etc.) continuam aqui...
-    function atualizarDashboard(transacoes) {
-        atualizarCards(transacoes);
-        criarGraficoLinhas(transacoes);
-        criarGraficoCategorias(transacoes);
-    }
-    function atualizarCards(transacoes) {
-        const receitas = transacoes.filter(t => t.tipo === 'Receita').reduce((acc, t) => acc + (t.valor || 0), 0);
-        const despesas = transacoes.filter(t => t.tipo === 'Despesa').reduce((acc, t) => acc + (t.valor || 0), 0);
-        const saldo = receitas - despesas;
-        totalReceitasEl.textContent = formatarMoeda(receitas);
-        totalDespesasEl.textContent = formatarMoeda(despesas);
-        saldoTotalEl.textContent = formatarMoeda(saldo);
-    }
-    function renderizarPlanejador() {
-        const planejadorItens = transacoesGeral.filter(t => t.status === 'Pendente');
-        planejadorItens.sort((a, b) => a.Data - b.Data);
-        corpoTabelaPlanejador.innerHTML = '';
-        planejadorItens.forEach(item => {
-            const tr = document.createElement('tr');
-            tr.className = `status-Pendente`;
-            tr.innerHTML = `<td>${formatarData(item.Data)}</td><td>${item.fonte}</td><td>${formatarMoeda(item.valor)}</td>
-            <td class="acoes">
-                <button class="btn-icon btn-marcar-pago" data-id="${item.id}" title="Marcar como Pago"><i class="fa-solid fa-check"></i></button>
-                <button class="btn-icon btn-edit" data-id="${item.id}" title="Editar"><i class="fa-solid fa-pencil"></i></button>
-                <button class="btn-icon btn-delete" data-id="${item.id}" title="Excluir"><i class="fa-solid fa-trash"></i></button>
-            </td>`;
-            corpoTabelaPlanejador.appendChild(tr);
-        });
-    }
-    function exibirDetalhesModal(tipo) {
-        const transacoesParaExibir = transacoesFiltradas.filter(t => {
-            if (tipo === 'Receita' || tipo === 'Despesa') return t.tipo === tipo;
-            return true; // para 'Saldo'
-        });
-        
-        let titulo = tipo === 'Saldo' ? 'Detalhes do Saldo' : `Detalhes de ${tipo}s`;
-        modalDetalhesTitulo.textContent = `${titulo} ${obterDescricaoFiltro()}`;
+            async function submeterDados(dados, id = null) {
+                const btnText = btnSalvarRegistro.querySelector('.btn-text');
+                const btnSpinner = btnSalvarRegistro.querySelector('.fa-spinner');
+                if (btnText && btnSpinner) { btnText.textContent = 'Salvando...'; btnSpinner.style.display = 'inline-block'; btnSalvarRegistro.disabled = true; }
+                
+                try {
+                    let error;
+                    if (id) {
+                        const { error: updateError } = await supabase.from('transacoes').update(dados).eq('id', id);
+                        error = updateError;
+                    } else {
+                        const { error: insertError } = await supabase.from('transacoes').insert([dados]);
+                        error = insertError;
+                    }
+                    if (error) throw error;
 
-        transacoesParaExibir.sort((a, b) => b.Data - a.Data);
-        let html = '<p style="text-align:center; padding: 20px;">Nenhuma transação encontrada.</p>';
-        if (transacoesParaExibir.length > 0) {
-            const tableRows = transacoesParaExibir.map(t => `
-                <tr style="color: ${t.tipo === 'Receita' ? 'var(--cor-verde)' : 'var(--cor-vermelho)'}">
-                    <td>${formatarData(t.Data)}</td>
-                    <td>${t.local || '-'}</td>
-                    <td>${t.fonte || '-'}</td>
-                    <td style="text-align:right;">${formatarMoeda(t.valor)}</td>
+                    showToast(`Transação ${id ? 'atualizada' : 'registrada'} com sucesso!`);
+                    modalRegistro.style.display = 'none';
+                    carregarDadosIniciais();
+                } catch (error) {
+                    showToast(`Erro ao salvar: ${error.message}`, 'error');
+                } finally {
+                    if (btnText && btnSpinner) { btnSalvarRegistro.disabled = false; btnText.textContent = 'Salvar'; btnSpinner.style.display = 'none'; }
+                }
+            }
+            
+            async function excluirTransacao(id) {
+                try {
+                    const { error } = await supabase.from('transacoes').delete().eq('id', id);
+                    if (error) throw error;
+                    showToast('Transação excluída com sucesso!');
+                    carregarDadosIniciais();
+                } catch (error) {
+                    showToast(`Erro ao excluir: ${error.message}`, 'error');
+                }
+            }
+
+            function aplicarFiltros() {
+                const tipoFiltro = document.querySelector('#filtro-tipo .active').dataset.tipo;
+                const periodoFiltroBtn = document.querySelector('#filtro-periodo .active');
+                const periodoFiltro = periodoFiltroBtn ? periodoFiltroBtn.dataset.periodo : null;
+                const dataInicio = dataInicioInput.value ? new Date(`${dataInicioInput.value}T00:00:00`) : null;
+                const dataFim = dataFimInput.value ? new Date(`${dataFimInput.value}T23:59:59`) : null;
+                const hoje = new Date();
+
+                const transacoesVisiveis = transacoesGeral.filter(t => t.status !== 'Pendente');
+                
+                transacoesFiltradas = transacoesVisiveis.filter(t => {
+                    if (!t || !t.Data) return false;
+                    if (tipoFiltro !== 'Todos' && t.tipo !== tipoFiltro) return false;
+                    
+                    if (dataInicio && dataFim) {
+                        return t.Data >= dataInicio && t.Data <= dataFim;
+                    } else if(periodoFiltro) {
+                        switch(periodoFiltro) {
+                            case 'Diario': return dateFns.isSameDay(t.Data, hoje);
+                            case 'Semanal': return dateFns.isThisWeek(t.Data, { weekStartsOn: 1 });
+                            case 'Mensal': return dateFns.isSameMonth(t.Data, hoje);
+                            case 'Anual': return dateFns.isSameYear(t.Data, hoje);
+                            default: return true;
+                        }
+                    }
+                    return true;
+                });
+
+                document.getElementById('titulo-grafico').textContent = `Evolução Financeira ${obterDescricaoFiltro()}`;
+                atualizarDashboard(transacoesFiltradas);
+                renderizarPlanejador();
+            }
+            
+            function atualizarDashboard(transacoes) {
+                atualizarCards(transacoes);
+                criarGraficoLinhas(transacoes);
+                criarGraficoCategorias(transacoes);
+            }
+            function atualizarCards(transacoes) {
+                const receitas = transacoes.filter(t => t.tipo === 'Receita').reduce((acc, t) => acc + (t.valor || 0), 0);
+                const despesas = transacoes.filter(t => t.tipo === 'Despesa').reduce((acc, t) => acc + (t.valor || 0), 0);
+                const saldo = receitas - despesas;
+                totalReceitasEl.textContent = formatarMoeda(receitas);
+                totalDespesasEl.textContent = formatarMoeda(despesas);
+                saldoTotalEl.textContent = formatarMoeda(saldo);
+            }
+            function renderizarPlanejador() {
+                const planejadorItens = transacoesGeral.filter(t => t.status === 'Pendente');
+                planejadorItens.sort((a, b) => a.Data - b.Data);
+                corpoTabelaPlanejador.innerHTML = '';
+                planejadorItens.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.className = `status-Pendente`;
+                    tr.innerHTML = `<td>${formatarData(item.Data)}</td><td>${item.fonte}</td><td>${formatarMoeda(item.valor)}</td>
                     <td class="acoes">
-                        <button class="btn-icon btn-edit" data-id="${t.id}" title="Editar"><i class="fa-solid fa-pencil"></i></button>
-                        <button class="btn-icon btn-delete" data-id="${t.id}" title="Excluir"><i class="fa-solid fa-trash"></i></button>
-                    </td>
-                </tr>`).join('');
-            html = `<div class="tabela-contas-wrapper"><table class="tabela-contas"><thead><tr><th>Data</th><th>Local</th><th>Fonte</th><th style="text-align:right;">Valor</th><th>Ações</th></tr></thead><tbody>${tableRows}</tbody></table></div>`;
-        }
-        modalDetalhesConteudo.innerHTML = html;
-        modalDetalhes.style.display = 'flex';
-    }
-    function abrirModalRegistro(tipo, id = null) {
-        formRegistro.reset();
-        document.getElementById('reg-id').value = id || '';
-        document.getElementById('reg-tipo').value = tipo;
-        popularDatalist(datalistLocais, locais);
-        const grupoStatus = document.getElementById('grupo-status');
-        
-        if (id) {
-            const transacao = transacoesGeral.find(t => t.id === id);
-            if (!transacao) return;
-            modalRegistroTitulo.textContent = 'Editar Transação';
-            document.getElementById('reg-data').value = transacao.data;
-            document.getElementById('reg-local').value = transacao.local;
-            document.getElementById('reg-fonte').value = transacao.fonte;
-            document.getElementById('reg-valor').value = (transacao.valor || 0).toFixed(2).replace('.', ',');
-            document.getElementById('reg-status').value = transacao.status;
-        } else {
-            document.getElementById('reg-data').valueAsDate = new Date();
-        }
+                        <button class="btn-icon btn-marcar-pago" data-id="${item.id}" title="Marcar como Pago"><i class="fa-solid fa-check"></i></button>
+                        <button class="btn-icon btn-edit" data-id="${item.id}" title="Editar"><i class="fa-solid fa-pencil"></i></button>
+                        <button class="btn-icon btn-delete" data-id="${item.id}" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                    </td>`;
+                    corpoTabelaPlanejador.appendChild(tr);
+                });
+            }
+            function exibirDetalhesModal(tipo) {
+                const transacoesParaExibir = transacoesFiltradas.filter(t => {
+                    if (tipo === 'Receita' || tipo === 'Despesa') return t.tipo === tipo;
+                    return true; // para 'Saldo'
+                });
+                
+                let titulo = tipo === 'Saldo' ? 'Detalhes do Saldo' : `Detalhes de ${tipo}s`;
+                modalDetalhesTitulo.textContent = `${titulo} ${obterDescricaoFiltro()}`;
 
-        if (tipo === 'Receita') {
-            if(!id) modalRegistroTitulo.textContent = 'Registrar Nova Receita';
-            popularDatalist(datalistFontes, fontesReceita);
-            grupoStatus.style.display = 'none';
-            btnSalvarRegistro.className = 'btn btn-verde';
-        } else {
-            if(!id) modalRegistroTitulo.textContent = 'Registrar Nova Despesa';
-            popularDatalist(datalistFontes, fontesDespesa);
-            grupoStatus.style.display = 'flex';
-            btnSalvarRegistro.className = 'btn btn-vermelho';
-        }
-        modalRegistro.style.display = 'flex';
-    }
-    function criarGraficoLinhas(transacoes) {
-        const ctx = document.getElementById('grafico-linhas').getContext('2d');
-        if (graficoLinhas) graficoLinhas.destroy();
-        if (transacoes.length === 0) { ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); graficoLinhas = null; return; }
-        const periodoFiltroBtn = document.querySelector('#filtro-periodo .active');
-        let unit = 'day';
-        if(periodoFiltroBtn) {
-            const periodoFiltro = periodoFiltroBtn.dataset.periodo;
-            switch(periodoFiltro) {  case 'Diario': unit = 'hour'; break;  case 'Semanal': case 'Mensal': unit = 'day'; break;  case 'Anual': unit = 'month'; break; }
-        }
-        const dadosAgrupados = transacoes.reduce((acc, t) => {
-            const d = t.Data;
-            if (!d || isNaN(d.getTime())) return acc;
-            let chaveObj;
-            if (unit === 'hour') chaveObj = new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours());
-            else if (unit === 'day') chaveObj = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-            else if (unit === 'month') chaveObj = new Date(d.getFullYear(), d.getMonth(), 1);
-            else chaveObj = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-            const chave = chaveObj.toISOString();
-            if (!acc[chave]) acc[chave] = { receitas: 0, despesas: 0 };
-            if (t.tipo === 'Receita') acc[chave].receitas += (t.valor || 0);
-            else if (t.tipo === 'Despesa') acc[chave].despesas += (t.valor || 0);
-            return acc;
-        }, {});
-        const labels = Object.keys(dadosAgrupados).sort((a,b) => new Date(a) - new Date(b));
-        graficoLinhas = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [ { label: 'Receitas', data: labels.map(key => dadosAgrupados[key].receitas), borderColor: 'var(--cor-verde)', backgroundColor: 'rgba(16, 185, 129, 0.2)', fill: true, tension: 0.3 }, { label: 'Despesas', data: labels.map(key => dadosAgrupados[key].despesas), borderColor: 'var(--cor-vermelho)', backgroundColor: 'rgba(239, 68, 68, 0.2)', fill: true, tension: 0.3 } ] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { type: 'time', time: { unit: unit, tooltipFormat: 'dd/MM/yyyy' } }, y: { beginAtZero: true, ticks: { callback: value => formatarMoeda(value) } } } } });
-    }
-    function criarGraficoCategorias(transacoes) {
-        const ctx = document.getElementById('grafico-categorias').getContext('2d');
-        if (graficoCategorias) graficoCategorias.destroy();
-        const despesas = transacoes.filter(t => t.tipo === 'Despesa');
-        if (despesas.length === 0) { ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); graficoCategorias = null; return; }
-        const dadosAgrupados = despesas.reduce((acc, t) => {
-            const fonte = t.fonte || 'Não especificado';
-            if (!acc[fonte]) acc[fonte] = 0;
-            acc[fonte] += (t.valor || 0);
-            return acc;
-        }, {});
-        const top10 = Object.entries(dadosAgrupados).sort(([,a],[,b]) => b - a).slice(0, 10);
-        document.getElementById('titulo-categorias').textContent = 'Top 10 Despesas por Fonte';
-        graficoCategorias = new Chart(ctx, { type: 'bar', data: { labels: top10.map(([fonte]) => fonte), datasets: [{ label: `Valor Total`, data: top10.map(([,valor]) => valor), backgroundColor: 'rgba(239, 68, 68, 0.7)' }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { callback: value => formatarMoeda(value) } } } } });
-    }
-    function aplicarTema(tema) {
-        document.body.classList.toggle('dark-mode', tema === 'dark');
-        btnToggleTheme.innerHTML = tema === 'dark' ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
-    }
+                transacoesParaExibir.sort((a, b) => b.Data - a.Data);
+                let html = '<p style="text-align:center; padding: 20px;">Nenhuma transação encontrada.</p>';
+                if (transacoesParaExibir.length > 0) {
+                    const tableRows = transacoesParaExibir.map(t => `
+                        <tr style="color: ${t.tipo === 'Receita' ? 'var(--cor-verde)' : 'var(--cor-vermelho)'}">
+                            <td>${formatarData(t.Data)}</td>
+                            <td>${t.local || '-'}</td>
+                            <td>${t.fonte || '-'}</td>
+                            <td style="text-align:right;">${formatarMoeda(t.valor)}</td>
+                            <td class="acoes">
+                                <button class="btn-icon btn-edit" data-id="${t.id}" title="Editar"><i class="fa-solid fa-pencil"></i></button>
+                                <button class="btn-icon btn-delete" data-id="${t.id}" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                            </td>
+                        </tr>`).join('');
+                    html = `<div class="tabela-contas-wrapper"><table class="tabela-contas"><thead><tr><th>Data</th><th>Local</th><th>Fonte</th><th style="text-align:right;">Valor</th><th>Ações</th></tr></thead><tbody>${tableRows}</tbody></table></div>`;
+                }
+                modalDetalhesConteudo.innerHTML = html;
+                modalDetalhes.style.display = 'flex';
+            }
+            function abrirModalRegistro(tipo, id = null) {
+                formRegistro.reset();
+                document.getElementById('reg-id').value = id || '';
+                document.getElementById('reg-tipo').value = tipo;
+                popularDatalist(datalistLocais, locais);
+                const grupoStatus = document.getElementById('grupo-status');
+                
+                if (id) {
+                    const transacao = transacoesGeral.find(t => t.id === id);
+                    if (!transacao) return;
+                    modalRegistroTitulo.textContent = 'Editar Transação';
+                    document.getElementById('reg-data').value = transacao.data;
+                    document.getElementById('reg-local').value = transacao.local;
+                    document.getElementById('reg-fonte').value = transacao.fonte;
+                    document.getElementById('reg-valor').value = (transacao.valor || 0).toFixed(2).replace('.', ',');
+                    document.getElementById('reg-status').value = transacao.status;
+                } else {
+                    document.getElementById('reg-data').valueAsDate = new Date();
+                }
 
-    // --- EVENT LISTENERS ---
-    btnToggleTheme.addEventListener('click', () => { const temaAtual = document.body.classList.contains('dark-mode') ? 'light' : 'dark'; localStorage.setItem('temaDashboard', temaAtual); aplicarTema(temaAtual); });
-    document.getElementById('filtro-tipo').addEventListener('click', (e) => { if (e.target.tagName === 'BUTTON') { document.querySelectorAll('#filtro-tipo .btn-filtro').forEach(btn => btn.classList.remove('active')); e.target.classList.add('active'); aplicarFiltros(); } });
-    document.getElementById('filtro-periodo').addEventListener('click', (e) => { if (e.target.tagName === 'BUTTON') { document.querySelectorAll('#filtro-periodo .btn-filtro').forEach(btn => btn.classList.remove('active')); e.target.classList.add('active'); dataInicioInput.value = ''; dataFimInput.value = ''; aplicarFiltros(); } });
-    btnAplicarFiltroData.addEventListener('click', () => { if(dataInicioInput.value && dataFimInput.value) { document.querySelectorAll('#filtro-periodo .btn-filtro').forEach(btn => btn.classList.remove('active')); aplicarFiltros(); } else { showToast('Por favor, selecione data de início e fim.', 'error'); } });
-    document.body.addEventListener('click', function(e) {
-        const btnDelete = e.target.closest('.btn-delete');
-        if (btnDelete) { const transacaoId = parseInt(btnDelete.dataset.id); const transacao = transacoesGeral.find(t => t.id === transacaoId); if (transacao && confirm(`Tem certeza que deseja excluir a transação "${transacao.fonte}" de ${formatarMoeda(transacao.valor)}?`)) { excluirTransacao(transacaoId); } }
-        const btnEdit = e.target.closest('.btn-edit');
-        if (btnEdit) { const transacaoId = parseInt(btnEdit.dataset.id); const transacao = transacoesGeral.find(t => t.id === transacaoId); if(transacao) abrirModalRegistro(transacao.tipo, transacaoId); }
-        const btnMarcarPago = e.target.closest('.btn-marcar-pago');
-        if (btnMarcarPago) { const transacaoId = parseInt(btnMarcarPago.dataset.id); const item = transacoesGeral.find(t => t.id === transacaoId); if(item && confirm(`Marcar a despesa "${item.fonte}" de ${formatarMoeda(item.valor)} como paga?`)) { supabase.from('transacoes').update({ status: 'Pago' }).eq('id', transacaoId).then(({error}) => { if(error) showToast(error.message, 'error'); else { showToast('Conta marcada como paga!'); carregarDadosIniciais(); } }); } }
-    });
-    formRegistro.addEventListener('submit', (e) => { e.preventDefault(); const id = document.getElementById('reg-id').value; const valorInput = document.getElementById('reg-valor').value.replace(/\./g, '').replace(',', '.'); if (isNaN(parseFloat(valorInput))) { showToast('Por favor, insira um valor numérico válido.', 'error'); return; } const dadosParaEnviar = { data: document.getElementById('reg-data').value, tipo: document.getElementById('reg-tipo').value, valor: parseFloat(valorInput), fonte: document.getElementById('reg-fonte').value, local: document.getElementById('reg-local').value, status: document.getElementById('reg-tipo').value === 'Despesa' ? document.getElementById('reg-status').value : 'Pago' }; submeterDados(dadosParaEnviar, id ? parseInt(id) : null); });
-    btnRefresh.addEventListener('click', carregarDadosIniciais);
-    cardReceitas.addEventListener('click', () => exibirDetalhesModal('Receita'));
-    cardDespesas.addEventListener('click', () => exibirDetalhesModal('Despesa'));
-    cardSaldo.addEventListener('click', () => exibirDetalhesModal('Saldo'));
-    btnFecharDetalhes.addEventListener('click', () => modalDetalhes.style.display = 'none');
-    btnAbrirModalReceita.addEventListener('click', () => abrirModalRegistro('Receita'));
-    btnAbrirModalDespesa.addEventListener('click', () => abrirModalRegistro('Despesa'));
-    btnFecharRegistro.addEventListener('click', () => modalRegistro.style.display = 'none');
-    btnCancelarRegistro.addEventListener('click', () => modalRegistro.style.display = 'none');
-    btnExportPdfReceitas.addEventListener('click', () => exportarParaPDF('Receita'));
-    btnExportCsvReceitas.addEventListener('click', () => exportarParaCSV('Receita'));
-    btnExportPdfDespesas.addEventListener('click', () => exportarParaPDF('Despesa'));
-    btnExportCsvDespesas.addEventListener('click', () => exportarParaCSV('Despesa'));
-    
-    // --- INICIALIZAÇÃO ---
-    aplicarTema(localStorage.getItem('temaDashboard') || 'light');
-    carregarDadosIniciais();
-});
-</script>
+                if (tipo === 'Receita') {
+                    if(!id) modalRegistroTitulo.textContent = 'Registrar Nova Receita';
+                    popularDatalist(datalistFontes, fontesReceita);
+                    grupoStatus.style.display = 'none';
+                    btnSalvarRegistro.className = 'btn btn-verde';
+                } else {
+                    if(!id) modalRegistroTitulo.textContent = 'Registrar Nova Despesa';
+                    popularDatalist(datalistFontes, fontesDespesa);
+                    grupoStatus.style.display = 'flex';
+                    btnSalvarRegistro.className = 'btn btn-vermelho';
+                }
+                modalRegistro.style.display = 'flex';
+            }
+            function criarGraficoLinhas(transacoes) {
+                const ctx = document.getElementById('grafico-linhas').getContext('2d');
+                if (graficoLinhas) graficoLinhas.destroy();
+                if (transacoes.length === 0) { ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); graficoLinhas = null; return; }
+                const periodoFiltroBtn = document.querySelector('#filtro-periodo .active');
+                let unit = 'day';
+                if(periodoFiltroBtn) {
+                    const periodoFiltro = periodoFiltroBtn.dataset.periodo;
+                    switch(periodoFiltro) {  case 'Diario': unit = 'hour'; break;  case 'Semanal': case 'Mensal': unit = 'day'; break;  case 'Anual': unit = 'month'; break; }
+                }
+                const dadosAgrupados = transacoes.reduce((acc, t) => {
+                    const d = t.Data;
+                    if (!d || isNaN(d.getTime())) return acc;
+                    let chaveObj;
+                    if (unit === 'hour') chaveObj = new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours());
+                    else if (unit === 'day') chaveObj = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+                    else if (unit === 'month') chaveObj = new Date(d.getFullYear(), d.getMonth(), 1);
+                    else chaveObj = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+                    const chave = chaveObj.toISOString();
+                    if (!acc[chave]) acc[chave] = { receitas: 0, despesas: 0 };
+                    if (t.tipo === 'Receita') acc[chave].receitas += (t.valor || 0);
+                    else if (t.tipo === 'Despesa') acc[chave].despesas += (t.valor || 0);
+                    return acc;
+                }, {});
+                const labels = Object.keys(dadosAgrupados).sort((a,b) => new Date(a) - new Date(b));
+                graficoLinhas = new Chart(ctx, { 
+                    type: 'line', 
+                    data: { 
+                        labels: labels, 
+                        datasets: [ 
+                            { label: 'Receitas', data: labels.map(key => dadosAgrupados[key].receitas), borderColor: 'var(--cor-verde)', backgroundColor: 'rgba(16, 185, 129, 0.2)', fill: true, tension: 0.3 }, 
+                            { label: 'Despesas', data: labels.map(key => dadosAgrupados[key].despesas), borderColor: 'var(--cor-vermelho)', backgroundColor: 'rgba(239, 68, 68, 0.2)', fill: true, tension: 0.3 } 
+                        ] 
+                    }, 
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        scales: { 
+                            x: { type: 'time', time: { unit: unit, tooltipFormat: 'dd/MM/yyyy' } }, 
+                            y: { beginAtZero: true, ticks: { callback: value => formatarMoeda(value) } } 
+                        } 
+                    } 
+                });
+            }
+            function criarGraficoCategorias(transacoes) {
+                const ctx = document.getElementById('grafico-categorias').getContext('2d');
+                if (graficoCategorias) graficoCategorias.destroy();
+                const despesas = transacoes.filter(t => t.tipo === 'Despesa');
+                if (despesas.length === 0) { ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); graficoCategorias = null; return; }
+                const dadosAgrupados = despesas.reduce((acc, t) => {
+                    const fonte = t.fonte || 'Não especificado';
+                    if (!acc[fonte]) acc[fonte] = 0;
+                    acc[fonte] += (t.valor || 0);
+                    return acc;
+                }, {});
+                const top10 = Object.entries(dadosAgrupados).sort(([,a],[,b]) => b - a).slice(0, 10);
+                document.getElementById('titulo-categorias').textContent = 'Top 10 Despesas por Fonte';
+                graficoCategorias = new Chart(ctx, { 
+                    type: 'bar', 
+                    data: { 
+                        labels: top10.map(([fonte]) => fonte), 
+                        datasets: [{ label: `Valor Total`, data: top10.map(([,valor]) => valor), backgroundColor: 'rgba(239, 68, 68, 0.7)' }] 
+                    }, 
+                    options: { 
+                        indexAxis: 'y', 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        plugins: { legend: { display: false } }, 
+                        scales: { x: { ticks: { callback: value => formatarMoeda(value) } } } 
+                    } 
+                });
+            }
+            function aplicarTema(tema) {
+                document.body.classList.toggle('dark-mode', tema === 'dark');
+                btnToggleTheme.innerHTML = tema === 'dark' ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
+            }
+
+            // --- EVENT LISTENERS ---
+            btnToggleTheme.addEventListener('click', () => { 
+                const temaAtual = document.body.classList.contains('dark-mode') ? 'light' : 'dark'; 
+                localStorage.setItem('temaDashboard', temaAtual); 
+                aplicarTema(temaAtual); 
+            });
+            document.getElementById('filtro-tipo').addEventListener('click', (e) => { 
+                if (e.target.tagName === 'BUTTON') { 
+                    document.querySelectorAll('#filtro-tipo .btn-filtro').forEach(btn => btn.classList.remove('active')); 
+                    e.target.classList.add('active'); 
+                    aplicarFiltros(); 
+                } 
+            });
+            document.getElementById('filtro-periodo').addEventListener('click', (e) => { 
+                if (e.target.tagName === 'BUTTON') { 
+                    document.querySelectorAll('#filtro-periodo .btn-filtro').forEach(btn => btn.classList.remove('active')); 
+                    e.target.classList.add('active'); 
+                    dataInicioInput.value = ''; 
+                    dataFimInput.value = ''; 
+                    aplicarFiltros(); 
+                } 
+            });
+            btnAplicarFiltroData.addEventListener('click', () => { 
+                if(dataInicioInput.value && dataFimInput.value) { 
+                    document.querySelectorAll('#filtro-periodo .btn-filtro').forEach(btn => btn.classList.remove('active')); 
+                    aplicarFiltros(); 
+                } else { 
+                    showToast('Por favor, selecione data de início e fim.', 'error'); 
+                } 
+            });
+            document.body.addEventListener('click', function(e) {
+                const btnDelete = e.target.closest('.btn-delete');
+                if (btnDelete) { 
+                    const transacaoId = parseInt(btnDelete.dataset.id); 
+                    const transacao = transacoesGeral.find(t => t.id === transacaoId); 
+                    if (transacao && confirm(`Tem certeza que deseja excluir a transação "${transacao.fonte}" de ${formatarMoeda(transacao.valor)}?`)) { 
+                        excluirTransacao(transacaoId); 
+                    } 
+                }
+                const btnEdit = e.target.closest('.btn-edit');
+                if (btnEdit) { 
+                    const transacaoId = parseInt(btnEdit.dataset.id); 
+                    const transacao = transacoesGeral.find(t => t.id === transacaoId); 
+                    if(transacao) abrirModalRegistro(transacao.tipo, transacaoId); 
+                }
+                const btnMarcarPago = e.target.closest('.btn-marcar-pago');
+                if (btnMarcarPago) { 
+                    const transacaoId = parseInt(btnMarcarPago.dataset.id); 
+                    const item = transacoesGeral.find(t => t.id === transacaoId); 
+                    if(item && confirm(`Marcar a despesa "${item.fonte}" de ${formatarMoeda(item.valor)} como paga?`)) { 
+                        supabase.from('transacoes').update({ status: 'Pago' }).eq('id', transacaoId).then(({error}) => { 
+                            if(error) showToast(error.message, 'error'); 
+                            else { showToast('Conta marcada como paga!'); carregarDadosIniciais(); } 
+                        }); 
+                    } 
+                }
+            });
+            formRegistro.addEventListener('submit', (e) => { 
+                e.preventDefault(); 
+                const id = document.getElementById('reg-id').value; 
+                const valorInput = document.getElementById('reg-valor').value.replace(/\./g, '').replace(',', '.'); 
+                if (isNaN(parseFloat(valorInput))) { 
+                    showToast('Por favor, insira um valor numérico válido.', 'error'); 
+                    return; 
+                } 
+                const dadosParaEnviar = { 
+                    data: document.getElementById('reg-data').value, 
+                    tipo: document.getElementById('reg-tipo').value, 
+                    valor: parseFloat(valorInput), 
+                    fonte: document.getElementById('reg-fonte').value, 
+                    local: document.getElementById('reg-local').value, 
+                    status: document.getElementById('reg-tipo').value === 'Despesa' ? document.getElementById('reg-status').value : 'Pago' 
+                }; 
+                submeterDados(dadosParaEnviar, id ? parseInt(id) : null); 
+            });
+            btnRefresh.addEventListener('click', carregarDadosIniciais);
+            cardReceitas.addEventListener('click', () => exibirDetalhesModal('Receita'));
+            cardDespesas.addEventListener('click', () => exibirDetalhesModal('Despesa'));
+            cardSaldo.addEventListener('click', () => exibirDetalhesModal('Saldo'));
+            btnFecharDetalhes.addEventListener('click', () => modalDetalhes.style.display = 'none');
+            btnAbrirModalReceita.addEventListener('click', () => abrirModalRegistro('Receita'));
+            btnAbrirModalDespesa.addEventListener('click', () => abrirModalRegistro('Despesa'));
+            btnFecharRegistro.addEventListener('click', () => modalRegistro.style.display = 'none');
+            btnCancelarRegistro.addEventListener('click', () => modalRegistro.style.display = 'none');
+            btnExportPdfReceitas.addEventListener('click', () => exportarParaPDF('Receita'));
+            btnExportCsvReceitas.addEventListener('click', () => exportarParaCSV('Receita'));
+            btnExportPdfDespesas.addEventListener('click', () => exportarParaPDF('Despesa'));
+            btnExportCsvDespesas.addEventListener('click', () => exportarParaCSV('Despesa'));
+            btnAbrirModalPlanejador.addEventListener('click', () => {
+                formPlanejador.reset();
+                document.getElementById('planejador-id').value = '';
+                document.getElementById('planejador-data').valueAsDate = new Date();
+                modalPlanejador.style.display = 'flex';
+            });
+            btnFecharPlanejador.addEventListener('click', () => modalPlanejador.style.display = 'none');
+            btnCancelarPlanejador.addEventListener('click', () => modalPlanejador.style.display = 'none');
+            formPlanejador.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const id = document.getElementById('planejador-id').value;
+                const valorInput = document.getElementById('planejador-valor').value.replace(/\./g, '').replace(',', '.');
+                if (isNaN(parseFloat(valorInput))) {
+                    showToast('Por favor, insira um valor numérico válido.', 'error');
+                    return;
+                }
+                const dadosParaEnviar = {
+                    data: document.getElementById('planejador-data').value,
+                    tipo: 'Despesa',
+                    valor: parseFloat(valorInput),
+                    fonte: document.getElementById('planejador-fonte').value,
+                    local: '',
+                    status: 'Pendente'
+                };
+                const btnText = formPlanejador.querySelector('.btn-text');
+                btnText.textContent = 'Salvando...';
+                try {
+                    let error;
+                    if (id) {
+                        const { error: updateError } = await supabase.from('transacoes').update(dadosParaEnviar).eq('id', id);
+                        error = updateError;
+                    } else {
+                        const { error: insertError } = await supabase.from('transacoes').insert([dadosParaEnviar]);
+                        error = insertError;
+                    }
+                    if (error) throw error;
+                    showToast(`Conta a pagar ${id ? 'atualizada' : 'registrada'} com sucesso!`);
+                    modalPlanejador.style.display = 'none';
+                    carregarDadosIniciais();
+                } catch (error) {
+                    showToast(`Erro ao salvar: ${error.message}`, 'error');
+                } finally {
+                    btnText.textContent = 'Salvar';
+                }
+            });
+
+            // --- INICIALIZAÇÃO ---
+            aplicarTema(localStorage.getItem('temaDashboard') || 'light');
+            carregarDadosIniciais();
+        });
+    </script>
 </body>
 </html>
